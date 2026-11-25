@@ -1,0 +1,2165 @@
+<!DOCTYPE HTML>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Happy Veggie World - 世界中の人と楽しむメルヘン農園ゲーム</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍓</text></svg>" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=M+PLUS+Rounded+1c:wght@500;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      font-family: 'M PLUS Rounded 1c', 'Inter', sans-serif;
+      min-height: 100vh;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      transition: background 1.2s ease;
+      overflow-x: hidden;
+    }
+
+    /* 天気に応じた背景グラデーション（ふわっと可愛いパステルメルヘン調） */
+    body.weather-sunny {
+      background: linear-gradient(135deg, #fff0f5 0%, #f0fff4 50%, #fffbe6 100%);
+    }
+    body.weather-rainy {
+      background: linear-gradient(135deg, #e0f2fe 0%, #ede9fe 50%, #f0fdf4 100%);
+    }
+    body.weather-rainbow {
+      background: linear-gradient(135deg, #ffe4e6 0%, #fef9c3 35%, #dcfce7 70%, #e0f2fe 100%);
+    }
+
+    /* 畑のタイルデザイン（ぷっくりチョコ＆キャラメル風） */
+    .farm-plot {
+      background: radial-gradient(circle at 35% 30%, #a1887f 0%, #795548 100%);
+      border: 4px solid #f8bbd0;
+      box-shadow: inset 0 6px 10px rgba(62, 39, 35, 0.35), 0 6px 12px rgba(244, 143, 177, 0.25);
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+    }
+    .farm-plot:hover {
+      transform: translateY(-4px) scale(1.03);
+      box-shadow: inset 0 6px 10px rgba(62, 39, 35, 0.35), 0 12px 20px rgba(244, 143, 177, 0.4);
+    }
+    .farm-plot:active {
+      transform: translateY(1px) scale(0.97);
+    }
+    .farm-plot.unplowed {
+      background: repeating-linear-gradient(45deg, #a1887f, #a1887f 10px, #8d6e63 10px, #8d6e63 20px);
+      border-color: #d7ccc8;
+    }
+    .farm-plot.watered {
+      background: radial-gradient(circle at 35% 30%, #6d4c41 0%, #4e342e 100%);
+      border-color: #81d4fa;
+    }
+    .farm-plot.dry {
+      background: radial-gradient(circle at 35% 30%, #d7ccc8 0%, #a1887f 100%);
+      border-color: #ffcc80;
+    }
+    .farm-plot.withered {
+      background: radial-gradient(circle at center, #616161 0%, #424242 100%);
+      border-color: #f48fb1;
+    }
+
+    /* ぷにぷに揺れる可愛いアニメーション */
+    @keyframes cuteWiggle {
+      0%, 100% { transform: translateY(0) rotate(-3deg) scale(1); }
+      50% { transform: translateY(-6px) rotate(3deg) scale(1.07); }
+    }
+    .animate-crop {
+      animation: cuteWiggle 2s infinite ease-in-out;
+    }
+
+    @keyframes readyGlow {
+      0%, 100% { filter: drop-shadow(0 0 8px rgba(255, 183, 77, 0.9)); transform: scale(1.08) rotate(-5deg); }
+      50% { filter: drop-shadow(0 0 20px rgba(240, 98, 146, 0.95)); transform: scale(1.22) rotate(5deg); }
+    }
+    .animate-ready {
+      animation: readyGlow 1.1s infinite ease-in-out;
+    }
+
+    @keyframes floatUp {
+      0% { opacity: 1; transform: translateY(0) scale(0.8); }
+      50% { opacity: 1; transform: translateY(-25px) scale(1.2); }
+      100% { opacity: 0; transform: translateY(-50px) scale(1); }
+    }
+    .floating-text {
+      animation: floatUp 1.1s ease-out forwards;
+      pointer-events: none;
+    }
+
+    /* ぷるんっ！バウンス効果 */
+    @keyframes squishyPop {
+      0% { transform: scale(1); }
+      30% { transform: scale(1.22, 0.82); }
+      55% { transform: scale(0.9, 1.12); }
+      75% { transform: scale(1.05, 0.96); }
+      100% { transform: scale(1); }
+    }
+    .animate-squish {
+      animation: squishyPop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    /* 四方に弾けるパーティクル */
+    @keyframes particleBurst {
+      0% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(0.5) rotate(0deg);
+      }
+      70% {
+        opacity: 1;
+      }
+      100% {
+        opacity: 0;
+        transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(1.25) rotate(var(--rot));
+      }
+    }
+    .burst-particle {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      pointer-events: none;
+      z-index: 30;
+      animation: particleBurst 0.85s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    /* チョウチョ＆ミツバチのふわふわ飛行 */
+    @keyframes flyAcross1 {
+      0% { transform: translate(-10vw, 15vh) rotate(10deg); }
+      25% { transform: translate(25vw, 8vh) rotate(-8deg); }
+      50% { transform: translate(55vw, 18vh) rotate(12deg); }
+      75% { transform: translate(85vw, 10vh) rotate(-5deg); }
+      100% { transform: translate(110vw, 16vh) rotate(8deg); }
+    }
+    @keyframes flyAcross2 {
+      0% { transform: translate(110vw, 65vh) scaleX(-1) rotate(8deg); }
+      35% { transform: translate(70vw, 55vh) scaleX(-1) rotate(-10deg); }
+      70% { transform: translate(30vw, 68vh) scaleX(-1) rotate(10deg); }
+      100% { transform: translate(-10vw, 58vh) scaleX(-1) rotate(-6deg); }
+    }
+    .animate-butterfly {
+      animation: flyAcross1 22s linear infinite;
+    }
+    .animate-bee {
+      animation: flyAcross2 18s linear infinite;
+    }
+
+    /* ゆっくり回転する太陽 */
+    @keyframes slowSpin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .animate-sun-spin {
+      animation: slowSpin 24s linear infinite;
+    }
+
+    /* レベルアップ紙吹雪 */
+    @keyframes confettiDrop {
+      0% { transform: translateY(-20px) rotate(0deg) scale(1); opacity: 1; }
+      100% { transform: translateY(105vh) rotate(720deg) scale(0.8); opacity: 0; }
+    }
+    .confetti-piece {
+      position: fixed;
+      top: -20px;
+      z-index: 60;
+      pointer-events: none;
+      animation: confettiDrop linear forwards;
+    }
+
+    /* 雨粒アニメーション */
+    .rain-overlay {
+      background-image: radial-gradient(#4fc3f7 1.5px, transparent 1.5px);
+      background-size: 24px 24px;
+      animation: rainFall 0.8s linear infinite;
+    }
+    @keyframes rainFall {
+      0% { background-position: 0 0; }
+      100% { background-position: -12px 24px; }
+    }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(0,0,0,0.04); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb { background: #f48fb1; border-radius: 10px; }
+  </style>
+</head>
+<body class="weather-sunny text-stone-800 antialiased flex flex-col relative">
+
+  <!-- 雨エフェクト用レイヤー -->
+  <div id="rain-layer" class="fixed inset-0 pointer-events-none z-10 opacity-0 transition-opacity duration-1000 rain-overlay"></div>
+
+  <!-- 可愛い背景デコレーション＆生き物アニメーション -->
+  <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+    <div id="sky-sun" class="absolute top-16 right-6 text-5xl opacity-50 animate-sun-spin transition-opacity duration-700">☀️</div>
+    <div id="sky-rainbow" class="absolute top-14 left-1/2 -translate-x-1/2 text-7xl opacity-0 transition-opacity duration-1000">🌈</div>
+    <div class="absolute top-16 left-6 text-4xl opacity-45 animate-bounce" style="animation-duration: 4s;">☁️</div>
+    <div class="absolute top-28 right-24 text-3xl opacity-40 animate-bounce" style="animation-duration: 5.5s;">☁️</div>
+    <div class="absolute bottom-12 left-8 text-3xl opacity-50">🌷</div>
+    <div class="absolute bottom-16 right-12 text-3xl opacity-50">🌼</div>
+    <div class="absolute top-0 left-0 text-2xl opacity-75 animate-butterfly">🦋</div>
+    <div class="absolute top-0 left-0 text-xl opacity-75 animate-bee">🐝</div>
+  </div>
+
+  <!-- ヘッダー -->
+  <header class="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-30 border-b-2 border-pink-100">
+    <div class="max-w-6xl mx-auto px-3 sm:px-5 py-2.5 flex flex-wrap items-center justify-between gap-2">
+      
+      <!-- ロゴ＆タイトル -->
+      <div class="flex items-center gap-2.5">
+        <div class="w-10 h-10 bg-gradient-to-br from-pink-400 via-rose-400 to-amber-300 rounded-2xl flex items-center justify-center text-white text-2xl shadow-md">
+          🍓
+        </div>
+        <div>
+          <h1 class="text-base sm:text-xl font-black text-pink-600 tracking-tight leading-tight flex items-center gap-1">
+            Happy Veggie World <span class="text-sm">🎀</span>
+          </h1>
+          <p class="text-[11px] text-emerald-600 font-bold" id="sync-status">Connecting...</p>
+        </div>
+      </div>
+
+      <!-- コントロール群（天気・言語・サウンド・コイン・ログイン） -->
+      <div class="flex items-center gap-1.5 sm:gap-2.5 flex-wrap">
+        
+        <!-- 天気バッジ -->
+        <div id="weather-badge" class="bg-sky-50 border border-sky-200 px-2.5 py-1 rounded-xl flex items-center gap-1.5 text-xs font-bold text-sky-900 shadow-sm" title="Global Weather">
+          <span id="weather-icon" class="text-base">☀️</span>
+          <span id="weather-label" class="hidden md:inline">Sunny</span>
+        </div>
+
+        <!-- 言語切り替えボタン -->
+        <div class="bg-stone-100 p-0.5 rounded-xl border border-stone-200 flex items-center text-xs font-bold">
+          <button onclick="window.setLanguage('ja')" id="lang-ja" class="px-2 py-1 rounded-lg transition">🇯🇵</button>
+          <button onclick="window.setLanguage('en')" id="lang-en" class="px-2 py-1 rounded-lg transition">🇺🇸</button>
+          <button onclick="window.setLanguage('es')" id="lang-es" class="px-2 py-1 rounded-lg transition">🇪🇸</button>
+        </div>
+
+        <!-- サウンド切り替え -->
+        <button id="sound-toggle" onclick="window.toggleSound()" class="bg-stone-100 hover:bg-stone-200 text-stone-700 p-2 rounded-xl border border-stone-200 text-xs transition" title="Toggle Sound">
+          🔊
+        </button>
+
+        <!-- ファーマーレベル＆EXP表示 -->
+        <div class="bg-emerald-100 border-2 border-emerald-300 px-2.5 py-1 rounded-2xl flex flex-col justify-center shadow-inner min-w-[76px]">
+          <div class="flex items-center justify-between text-[11px] font-black text-emerald-900 leading-none">
+            <span>🎓 Lv.<span id="level-display">1</span></span>
+            <span id="exp-text" class="text-[9px] text-emerald-700">0/50</span>
+          </div>
+          <div class="w-full bg-emerald-200/80 h-1.5 rounded-full overflow-hidden mt-1">
+            <div id="exp-bar" class="bg-emerald-600 h-full transition-all duration-300" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <!-- コイン表示 -->
+        <div class="bg-amber-100 border-2 border-amber-300 px-3 py-1 rounded-2xl flex items-center gap-1.5 shadow-inner">
+          <span class="text-base sm:text-lg">🪙</span>
+          <span id="coin-display" class="font-black text-amber-800 text-sm sm:text-base">100</span>
+        </div>
+
+        <!-- ユーザー情報 / ログインボタン -->
+        <div id="auth-area" class="flex items-center"></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- メインコンテンツ -->
+  <main class="flex-grow max-w-6xl w-full mx-auto px-3 sm:px-5 py-5 grid grid-cols-1 lg:grid-cols-12 gap-5 relative z-20">
+
+    <!-- 左側：農園エリア (7カラム) -->
+    <section class="lg:col-span-7 flex flex-col gap-4">
+      <div class="bg-white/95 backdrop-blur rounded-[2rem] p-4 sm:p-6 shadow-xl border-2 border-pink-100">
+        
+        <!-- 農園ヘッダー＆一括アクション -->
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+          <div>
+            <h2 class="text-lg sm:text-xl font-black text-pink-700 flex items-center gap-2">
+              <span id="farm-title-icon">🏡</span> <span id="farm-title-text" data-i18n="farmTitle">あなたの農園</span>
+            </h2>
+            <p id="weather-bonus-text" class="text-xs font-bold text-amber-600 mt-0.5"></p>
+          </div>
+
+          <div class="flex items-center gap-2" id="farm-header-actions">
+            <button onclick="window.harvestAllReady()" class="bg-gradient-to-r from-amber-300 to-pink-300 hover:from-amber-400 hover:to-pink-400 active:scale-95 text-rose-950 font-black text-xs px-3.5 py-2 rounded-2xl shadow-sm transition flex items-center gap-1 border border-white">
+              <span>🧺</span> <span data-i18n="harvestAll">一括収穫</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 訪問中バナー（他人の農園を見ているときのみ表示） -->
+        <div id="visiting-banner" class="hidden mb-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white p-3 rounded-2xl shadow-md flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center gap-2 min-w-0">
+            <span class="text-2xl">🏡</span>
+            <div class="min-w-0">
+              <div class="text-xs font-black truncate" id="visiting-farmer-name">Visiting Farmer</div>
+              <div class="text-[10px] text-indigo-100 font-bold" data-i18n="visitHelpHint">作物をタップしてお手伝い！（報酬あり）</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-1.5 shrink-0">
+            <button id="visit-friend-btn" onclick="window.toggleFriendFromVisit()" class="bg-white/20 hover:bg-white/30 text-white text-xs font-black px-2.5 py-1.5 rounded-xl transition">
+              ⭐ Friend
+            </button>
+            <button onclick="window.returnHome()" class="bg-amber-400 hover:bg-amber-300 text-amber-950 text-xs font-black px-3 py-1.5 rounded-xl shadow transition">
+              🏠 <span data-i18n="returnHome">帰宅する</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 3x3 畑グリッド -->
+        <div id="farm-grid" class="grid grid-cols-3 gap-3 sm:gap-4 aspect-square max-w-md mx-auto">
+          <!-- JSで9つの区画を生成 -->
+        </div>
+
+        <!-- 農具・お世話ツールバー -->
+        <div class="mt-4 bg-pink-50/80 rounded-2xl p-2.5 border-2 border-pink-100">
+          <div class="text-[11px] font-black text-pink-800 mb-1.5 flex items-center justify-between">
+            <span>🎀 <span id="toolbar-title-text" data-i18n="toolTitle">農具・肥料ツール（選択して畑をタップ）</span></span>
+            <span id="selected-tool-desc" class="text-emerald-700 font-bold"></span>
+          </div>
+          <div id="tool-bar" class="grid grid-cols-4 sm:grid-cols-7 gap-1.5">
+            <!-- JSでツールボタンを生成 -->
+          </div>
+        </div>
+
+        <!-- 操作ガイド -->
+        <div class="mt-3 bg-amber-50/80 rounded-2xl p-2.5 text-[11px] text-stone-600 flex flex-wrap justify-around gap-1.5 border border-amber-100 font-bold">
+          <div class="flex items-center gap-1"><span>🚜</span> <span data-i18n="guidePlow">1.クワで耕す</span></div>
+          <div class="flex items-center gap-1"><span>🌱</span> <span data-i18n="guidePlant">2.タネまき＆水やり</span></div>
+          <div class="flex items-center gap-1"><span>🐛</span> <span data-i18n="guidePest">3.雑草・害虫ケアでSSランク！</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 右側：タネショップ＆世界ランキング＆実績 (5カラム) -->
+    <section class="lg:col-span-5 flex flex-col gap-4">
+      
+      <!-- タネショップ -->
+      <div class="bg-white/95 backdrop-blur rounded-[2rem] p-4 sm:p-5 shadow-xl border-2 border-amber-100">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-base sm:text-lg font-black text-amber-800 flex items-center gap-2">
+            <span>🏪</span> <span data-i18n="shopTitle">タネショップ</span>
+            <span class="text-[11px] bg-pink-100 text-pink-700 px-2.5 py-0.5 rounded-full font-black">34 Crops 🌸</span>
+          </h2>
+          <span class="text-xs font-bold text-stone-400" data-i18n="selectSeed">タネを選択</span>
+        </div>
+
+        <div id="seed-shop" class="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto pr-1">
+          <!-- JSで34種類のタネを生成 -->
+        </div>
+      </div>
+
+      <!-- タブ切り替え（世界ランキング / フレンド / 収穫実績） -->
+      <div class="bg-white/95 backdrop-blur rounded-[2rem] p-4 sm:p-5 shadow-xl border-2 border-emerald-100 flex-grow flex flex-col">
+        <div class="flex items-center gap-1.5 mb-3 bg-stone-100 p-1 rounded-2xl">
+          <button onclick="window.switchTab('ranking')" id="tab-ranking" class="flex-1 py-1.5 px-2 rounded-xl text-xs font-black transition bg-white text-emerald-800 shadow-sm">
+            🏆 <span data-i18n="worldRanking">世界</span>
+          </button>
+          <button onclick="window.switchTab('friends')" id="tab-friends" class="flex-1 py-1.5 px-2 rounded-xl text-xs font-black transition text-stone-500 hover:text-stone-700">
+            👥 <span data-i18n="friendsTab">フレンド</span>
+          </button>
+          <button onclick="window.switchTab('stats')" id="tab-stats" class="flex-1 py-1.5 px-2 rounded-xl text-xs font-black transition text-stone-500 hover:text-stone-700">
+            📊 <span data-i18n="myHarvest">図鑑</span>
+          </button>
+        </div>
+
+        <!-- 世界ランキングビュー -->
+        <div id="view-ranking" class="space-y-2 max-h-64 overflow-y-auto pr-1 flex-grow">
+          <p class="text-xs text-stone-400 text-center py-6">Loading World Farmers...</p>
+        </div>
+
+        <!-- フレンド＆お手伝い履歴ビュー -->
+        <div id="view-friends" class="space-y-2 max-h-64 overflow-y-auto pr-1 flex-grow hidden">
+          <!-- JSでフレンド一覧とお手伝いログを生成 -->
+        </div>
+
+        <!-- 収穫実績ビュー -->
+        <div id="view-stats" class="space-y-2 max-h-64 overflow-y-auto pr-1 flex-grow hidden">
+          <!-- JSで統計を生成 -->
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- カスタムメッセージ通知トースト -->
+  <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- Firebase SDK & ゲームロジック -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { 
+      getAuth, 
+      GoogleAuthProvider, 
+      signInWithPopup, 
+      signOut, 
+      onAuthStateChanged,
+      signInWithCustomToken,
+      signInAnonymously
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { 
+      getFirestore, 
+      initializeFirestore,
+      doc, 
+      setDoc, 
+      updateDoc,
+      onSnapshot,
+      collection
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // ==========================================
+    // 1. Firebase 初期化設定
+    // ==========================================
+    const defaultFirebaseConfig = {
+      apiKey: "AIzaSyAhuXLkwfJFtUbgacAGXur_jUVcYebDxLM",
+      authDomain: "yasaigame.firebaseapp.com",
+      projectId: "yasaigame",
+      storageBucket: "yasaigame.firebasestorage.app",
+      messagingSenderId: "996649365639",
+      appId: "1:996649365639:web:670cc98c23d92de4354822"
+    };
+
+    const firebaseConfig = (typeof __firebase_config !== 'undefined' && __firebase_config)
+      ? JSON.parse(__firebase_config)
+      : defaultFirebaseConfig;
+
+    const appId = (typeof __app_id !== 'undefined' && __app_id)
+      ? __app_id
+      : 'yasaigame-world';
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    // ネットワーク一時停止やプロキシ環境でも安定して通信できるよう設定
+    const db = initializeFirestore(app, {
+      experimentalAutoDetectLongPolling: true
+    });
+    const googleProvider = new GoogleAuthProvider();
+
+    // ==========================================
+    // 2. 多言語辞書データ (日本語 / English / Español)
+    // ==========================================
+    let currentLang = 'ja';
+    const I18N = {
+      ja: {
+        farmTitle: 'あなたの農園',
+        harvestAll: '一括収穫',
+        toolTitle: '農具・ケア用品（選択して畑をタップ）',
+        guidePlow: '1.クワで耕す',
+        guidePlant: '2.タネ＆水分管理',
+        guidePest: '3.雑草・害虫ケアで特秀SS！',
+        shopTitle: 'タネショップ',
+        selectSeed: 'タネを選択',
+        worldRanking: '世界ランキング',
+        friendsTab: 'フレンド',
+        myHarvest: '収穫データ',
+        visitFarmBtn: '訪問',
+        returnHome: '自分の農園へ',
+        visitHelpHint: '相手の作物をタップしてお手伝い！（お礼コイン＆EXP獲得）',
+        visitingTitleSuffix: 'の農園',
+        coOpToolTitle: 'お手伝いツール（相手の畑をタップして助けよう！）',
+        helpWaterLabel: '水やり応援',
+        helpWaterDesc: '相手の水分+45%（お礼 +15🪙 +10EXP）',
+        helpFertLabel: '応援肥料',
+        helpFertDesc: '相手の成長加速（10🪙消費 → お礼 +25EXP）',
+        helpReviveLabel: '復活の秘薬',
+        helpReviveDesc: '枯れた作物を蘇生！（25🪙消費 → お礼 +50EXP）',
+        helpedWaterMsg: '💧 農園に水やり応援をしました！ +15🪙 +10EXP',
+        helpedFertMsg: '✨ 応援肥料をプレゼントしました！ +25EXP',
+        helpedReviveMsg: '💖 枯れた作物を奇跡の復活させました！ +50EXP',
+        notWitheredMsg: 'この作物は元気です！（枯死状態のみ復活可能）',
+        emptyPlotVisitMsg: 'ここにはまだ何も植えられていません',
+        ripePlotVisitMsg: '✨ 収穫時期を迎えています！（持ち主の収穫待ち）',
+        friendAdded: '⭐ フレンドに登録しました！',
+        friendRemoved: 'フレンド登録を解除しました',
+        noFriendsMsg: 'ランキングから気になるプレイヤーを訪問して「⭐ フレンド」登録しよう！',
+        recentVisitorsTitle: '💌 最近のお手伝い履歴',
+        weatherSunny: '☀️ 快晴：土壌が乾きやすいので水やり注意！',
+        weatherRainy: '🌧️ 恵みの雨：自動水やり＆成長スピード2倍！',
+        weatherRainbow: '🌈 虹の日：全作物の収穫売値1.5倍ボーナス！',
+        syncing: 'クラウド同期中...',
+        cloudSaved: '☁️ クラウド保存済み',
+        guestStatus: 'ゲストプレイ中（ログインで世界ランキング参加）',
+        loginBtn: 'Googleでログイン',
+        logoutBtn: 'ログアウト',
+        loginSuccess: 'ログインしました！世界ランキングに参加できます🌍',
+        levelLocked: 'で解放されます',
+        notEnoughCoins: 'コインが足りません！',
+        harvestedMsg: 'を収穫！',
+        levelUpMsg: 'にレベルアップ！新しいタネが解放されたかも！',
+        witheredDry: '⚠️ 水不足または腐敗で作物が枯れてしまいました！',
+        witheredOverwater: '💦 水のやりすぎ（根腐れ）で作物が枯れました！',
+        overWatered: '⚠️ 水分過多！100%を超えると根腐れします',
+        waterBoost: '💧+45% 潤った！',
+        alreadyFert: 'すでにこの肥料は使用済みです',
+        fertApplied: '🧪 肥料を与えました！',
+        cleanedPlot: '⛏️ 畑をきれいにしました',
+        needShovel: '🥀 枯れています！スコップで撤去してください',
+        noRanking: 'まだランキングデータがありません。Googleログインして一番乗りしよう！',
+        plantHint: 'を植える',
+        plowHint: 'クワで耕す',
+        needPlowMsg: '🚜 先に「クワ」で硬い土を耕してください！',
+        plowedMsg: '🚜 土をふかふかに耕しました！',
+        weedRemovedMsg: '🌿 雑草を抜いて栄養を守りました！',
+        pestCuredMsg: '🧴 害虫を駆除しました！',
+        witheredBadge: '枯死',
+        tapShovel: '⛏️ スコップで撤去',
+        tapHarvest: '✨ タップで収穫',
+        toolPlow: 'クワ',
+        descPlow: '硬い土をふかふかに耕す（無料）',
+        toolHand: 'タネ/収穫',
+        descHand: '耕した土にタネまき・雑草抜き・収穫',
+        toolWater: 'ジョウロ',
+        descWater: '水分+45%（100%超で根腐れ注意！）',
+        toolPest: 'おくすり',
+        descPest: '🐛害虫を駆除する（10🪙）',
+        toolSpeed: '成長肥料',
+        descSpeed: '栄養UP＆成長速度1.6倍（15🪙）',
+        toolQuality: '品質肥料',
+        descQuality: '特秀ランク＆売値1.5倍（30🪙）',
+        toolShovel: 'スコップ',
+        descShovel: '枯れた作物を掘り起こしてリセット'
+      },
+      en: {
+        farmTitle: 'Your Farm',
+        harvestAll: 'Harvest All',
+        toolTitle: 'Farm Tools & Care (Select & Tap Plot)',
+        guidePlow: '1. Plow Soil',
+        guidePlant: '2. Plant & Water',
+        guidePest: '3. Clear Weeds/Pests for SS Rank!',
+        shopTitle: 'Seed Shop',
+        selectSeed: 'Select Seed',
+        worldRanking: 'World Ranking',
+        friendsTab: 'Friends',
+        myHarvest: 'Harvest Log',
+        visitFarmBtn: 'Visit',
+        returnHome: 'Go Home',
+        visitHelpHint: 'Tap crops to help out! (Earn bonus Coins & EXP)',
+        visitingTitleSuffix: "'s Farm",
+        coOpToolTitle: 'Co-op Help Tools (Tap neighbor crops to help!)',
+        helpWaterLabel: 'Help Water',
+        helpWaterDesc: 'Water +45% for neighbor (+15🪙 +10EXP)',
+        helpFertLabel: 'Gift Boost',
+        helpFertDesc: 'Speed up growth (Cost 10🪙 → +25EXP)',
+        helpReviveLabel: 'Revive Elixir',
+        helpReviveDesc: 'Revive withered crop! (Cost 25🪙 → +50EXP)',
+        helpedWaterMsg: '💧 Watered neighbor crop! +15🪙 +10EXP',
+        helpedFertMsg: '✨ Gifted growth boost! +25EXP',
+        helpedReviveMsg: '💖 Revived withered crop! +50EXP',
+        notWitheredMsg: 'Crop is healthy! (Only withered crops need Revive)',
+        emptyPlotVisitMsg: 'Nothing planted here yet',
+        ripePlotVisitMsg: '✨ Ready for owner to harvest!',
+        friendAdded: '⭐ Added to Friends!',
+        friendRemoved: 'Removed from Friends',
+        noFriendsMsg: 'Visit farmers from the World Ranking and tap "⭐ Friend"!',
+        recentVisitorsTitle: '💌 Recent Helper Log',
+        weatherSunny: '☀️ Sunny: Soil dries faster! Watch water levels.',
+        weatherRainy: '🌧️ Rainy: Auto-watering & 2x Growth Speed!',
+        weatherRainbow: '🌈 Rainbow: 1.5x Sell Price Bonus on all crops!',
+        syncing: 'Syncing...',
+        cloudSaved: '☁️ Cloud Saved',
+        guestStatus: 'Guest Mode (Sign in to join World Ranking)',
+        loginBtn: 'Sign in with Google',
+        logoutBtn: 'Sign Out',
+        loginSuccess: 'Signed in! Joined World Ranking 🌍',
+        levelLocked: 'required to unlock',
+        notEnoughCoins: 'Not enough coins!',
+        harvestedMsg: ' harvested!',
+        levelUpMsg: ' Level Up! Check new seeds in the shop!',
+        witheredDry: '⚠️ A crop withered due to drought or rot!',
+        witheredOverwater: '💦 Overwatered! Crop died from root rot!',
+        overWatered: '⚠️ Too much water! >100% causes root rot!',
+        waterBoost: '💧+45% Watered!',
+        alreadyFert: 'Fertilizer already applied!',
+        fertApplied: '🧪 Fertilizer applied!',
+        cleanedPlot: '⛏️ Plot cleared!',
+        needShovel: '🥀 Withered! Use the Shovel tool to clear.',
+        noRanking: 'No world farmers yet. Sign in with Google to be #1!',
+        plantHint: '',
+        plowHint: 'Plow Soil',
+        needPlowMsg: '🚜 Use the Plow tool first to till the soil!',
+        plowedMsg: '🚜 Soil tilled and ready for seeds!',
+        weedRemovedMsg: '🌿 Pulled weeds to protect soil nutrients!',
+        pestCuredMsg: '🧴 Cured pests!',
+        witheredBadge: 'WITHERED',
+        tapShovel: '⛏️ Clear',
+        tapHarvest: '✨ Harvest',
+        toolPlow: 'Plow',
+        descPlow: 'Till hard soil before planting (FREE)',
+        toolHand: 'Seed/Care',
+        descHand: 'Plant seeds, pull weeds, or harvest',
+        toolWater: 'Watering',
+        descWater: 'Water +45% (>100% causes root rot!)',
+        toolPest: 'Spray',
+        descPest: 'Cure 🐛 Pests (10🪙)',
+        toolSpeed: 'Speed Fert',
+        descSpeed: 'Nutrients + 1.6x Speed (15🪙)',
+        toolQuality: 'Quality Fert',
+        descQuality: 'SS Rank + 1.5x Sell Price (30🪙)',
+        toolShovel: 'Shovel',
+        descShovel: 'Remove withered crops'
+      },
+      es: {
+        farmTitle: 'Tu Granja',
+        harvestAll: 'Cosechar Todo',
+        toolTitle: 'Herramientas Agrícolas',
+        guidePlow: '1. Arar Tierra',
+        guidePlant: '2. Sembrar y Regar',
+        guidePest: '3. Quitar Plagas = Rango SS',
+        shopTitle: 'Tienda de Semillas',
+        selectSeed: 'Elige Semilla',
+        worldRanking: 'Ranking',
+        friendsTab: 'Amigos',
+        myHarvest: 'Cosechas',
+        visitFarmBtn: 'Visitar',
+        returnHome: 'Volver',
+        visitHelpHint: '¡Toca cultivos para ayudar! (Gana monedas y EXP)',
+        visitingTitleSuffix: ' - Granja',
+        coOpToolTitle: 'Herramientas de Ayuda (¡Ayuda a tus vecinos!)',
+        helpWaterLabel: 'Regar Ayuda',
+        helpWaterDesc: 'Agua +45% (+15🪙 +10EXP)',
+        helpFertLabel: 'Regalo Abono',
+        helpFertDesc: 'Acelera crecimiento (10🪙 → +25EXP)',
+        helpReviveLabel: 'Elixir Vida',
+        helpReviveDesc: '¡Revive cultivo marchito! (25🪙 → +50EXP)',
+        helpedWaterMsg: '💧 ¡Regaste el cultivo vecino! +15🪙 +10EXP',
+        helpedFertMsg: '✨ ¡Regalaste abono de crecimiento! +25EXP',
+        helpedReviveMsg: '💖 ¡Reviviste el cultivo marchito! +50EXP',
+        notWitheredMsg: '¡El cultivo está sano!',
+        emptyPlotVisitMsg: 'Aún no hay nada plantado aquí',
+        ripePlotVisitMsg: '✨ ¡Listo para que el dueño coseche!',
+        friendAdded: '⭐ ¡Añadido a Amigos!',
+        friendRemoved: 'Eliminado de Amigos',
+        noFriendsMsg: '¡Visita granjeros en el Ranking Mundial y añádelos como amigos!',
+        recentVisitorsTitle: '💌 Historial de Ayudas',
+        weatherSunny: '☀️ Soleado: ¡La tierra se seca rápido!',
+        weatherRainy: '🌧️ Lluvia: ¡Riego automático y velocidad x2!',
+        weatherRainbow: '🌈 Arcoíris: ¡Bono x1.5 en monedas!',
+        syncing: 'Sincronizando...',
+        cloudSaved: '☁️ Guardado en la nube',
+        guestStatus: 'Modo Invitado (Inicia sesión para el Ranking)',
+        loginBtn: 'Entrar con Google',
+        logoutBtn: 'Salir',
+        loginSuccess: '¡Conectado al Ranking Mundial! 🌍',
+        levelLocked: 'requerido para desbloquear',
+        notEnoughCoins: '¡No tienes suficientes monedas!',
+        harvestedMsg: ' cosechado!',
+        levelUpMsg: ' ¡Subiste de nivel! ¡Nuevas semillas!',
+        witheredDry: '⚠️ ¡Un cultivo se marchitó!',
+        witheredOverwater: '💦 ¡Demasiada agua! Raíces podridas.',
+        overWatered: '⚠️ ¡Cuidado! >100% pudre la raíz',
+        waterBoost: '💧+45% ¡Regado!',
+        alreadyFert: 'Ya tiene este fertilizante',
+        fertApplied: '🧪 ¡Fertilizante aplicado!',
+        cleanedPlot: '⛏️ Parcela limpia',
+        needShovel: '🥀 ¡Marchito! Usa la pala para limpiar',
+        noRanking: 'Aún no hay jugadores. ¡Sé el primero!',
+        plantHint: '',
+        plowHint: 'Arar tierra',
+        needPlowMsg: '🚜 ¡Usa el arado primero para preparar la tierra!',
+        plowedMsg: '🚜 ¡Tierra arada y lista!',
+        weedRemovedMsg: '🌿 ¡Malas hierbas eliminadas!',
+        pestCuredMsg: '🧴 ¡Plaga eliminada!',
+        witheredBadge: 'MARCHITO',
+        tapShovel: '⛏️ Limpiar',
+        tapHarvest: '✨ Cosechar',
+        toolPlow: 'Arado',
+        descPlow: 'Arar la tierra antes de sembrar',
+        toolHand: 'Sembrar',
+        descHand: 'Sembrar, quitar hierbas o cosechar',
+        toolWater: 'Regadera',
+        descWater: 'Agua +45% (>100% pudre raíz)',
+        toolPest: 'Spray',
+        descPest: 'Curar 🐛 plagas (10🪙)',
+        toolSpeed: 'F. Rápido',
+        descSpeed: 'Nutrientes y velocidad x1.6 (15🪙)',
+        toolQuality: 'F. Calidad',
+        descQuality: 'Rango SS y precio x1.5 (30🪙)',
+        toolShovel: 'Pala',
+        descShovel: 'Quitar cultivos marchitos'
+      }
+    };
+
+    function t(key) {
+      return (I18N[currentLang] && I18N[currentLang][key]) || I18N.ja[key] || key;
+    }
+
+    // ==========================================
+    // 3. 農具・肥料 & 全26種類の農作物マスターデータ
+    // ==========================================
+    const TOOLS = [
+      { id: 'plow', icon: '🚜', labelKey: 'toolPlow', descKey: 'descPlow', cost: 0 },
+      { id: 'hand', icon: '🧤', labelKey: 'toolHand', descKey: 'descHand', cost: 0 },
+      { id: 'water', icon: '🚿', labelKey: 'toolWater', descKey: 'descWater', cost: 0 },
+      { id: 'pest', icon: '🧴', labelKey: 'toolPest', descKey: 'descPest', cost: 10 },
+      { id: 'speedFert', icon: '⚡', labelKey: 'toolSpeed', descKey: 'descSpeed', cost: 15 },
+      { id: 'qualityFert', icon: '💎', labelKey: 'toolQuality', descKey: 'descQuality', cost: 30 },
+      { id: 'shovel', icon: '⛏️', labelKey: 'toolShovel', descKey: 'descShovel', cost: 0 }
+    ];
+
+    const COOP_TOOLS = [
+      { id: 'helpWater', icon: '🚿', labelKey: 'helpWaterLabel', descKey: 'helpWaterDesc', cost: 0 },
+      { id: 'helpFert', icon: '✨', labelKey: 'helpFertLabel', descKey: 'helpFertDesc', cost: 10 },
+      { id: 'helpRevive', icon: '💖', labelKey: 'helpReviveLabel', descKey: 'helpReviveDesc', cost: 25 }
+    ];
+    const CROPS = {
+      // Lv.1
+      radish: { id: 'radish', reqLevel: 1, icon: '🌱', cropEmoji: '🏮', seedCost: 10, sellPrice: 22, exp: 12, growTimeSec: 12, freshTimeSec: 45, waterDrainPerSec: 1.5, names: { ja: 'ラディッシュ', en: 'Radish', es: 'Rábano' } },
+      lettuce: { id: 'lettuce', reqLevel: 1, icon: '🥬', cropEmoji: '🥬', seedCost: 12, sellPrice: 26, exp: 14, growTimeSec: 14, freshTimeSec: 50, waterDrainPerSec: 1.6, names: { ja: 'ふわふわレタス', en: 'Fluffy Lettuce', es: 'Lechuga' } },
+      potato: { id: 'potato', reqLevel: 1, icon: '🥔', cropEmoji: '🥔', seedCost: 15, sellPrice: 32, exp: 16, growTimeSec: 16, freshTimeSec: 60, waterDrainPerSec: 1.2, names: { ja: 'じゃがいも', en: 'Potato', es: 'Patata' } },
+      onion: { id: 'onion', reqLevel: 1, icon: '🧅', cropEmoji: '🧅', seedCost: 18, sellPrice: 38, exp: 18, growTimeSec: 18, freshTimeSec: 55, waterDrainPerSec: 1.4, names: { ja: 'たまねぎ', en: 'Onion', es: 'Cebolla' } },
+      // Lv.2
+      edamame: { id: 'edamame', reqLevel: 2, icon: '🫛', cropEmoji: '🫛', seedCost: 22, sellPrice: 48, exp: 22, growTimeSec: 20, freshTimeSec: 50, waterDrainPerSec: 1.7, names: { ja: 'ぷっくりえだまめ', en: 'Edamame', es: 'Edamame' } },
+      carrot: { id: 'carrot', reqLevel: 2, icon: '🥕', cropEmoji: '🥕', seedCost: 25, sellPrice: 55, exp: 25, growTimeSec: 22, freshTimeSec: 50, waterDrainPerSec: 1.8, names: { ja: 'にんじん', en: 'Carrot', es: 'Zanahoria' } },
+      cucumber: { id: 'cucumber', reqLevel: 2, icon: '🥒', cropEmoji: '🥒', seedCost: 30, sellPrice: 65, exp: 28, growTimeSec: 24, freshTimeSec: 45, waterDrainPerSec: 2.2, names: { ja: 'きゅうり', en: 'Cucumber', es: 'Pepino' } },
+      bellpepper: { id: 'bellpepper', reqLevel: 2, icon: '🫑', cropEmoji: '🫑', seedCost: 35, sellPrice: 75, exp: 32, growTimeSec: 26, freshTimeSec: 48, waterDrainPerSec: 2.0, names: { ja: 'ピーマン', en: 'Bell Pepper', es: 'Pimiento' } },
+      // Lv.3
+      tomato: { id: 'tomato', reqLevel: 3, icon: '🍅', cropEmoji: '🍅', seedCost: 45, sellPrice: 98, exp: 40, growTimeSec: 30, freshTimeSec: 42, waterDrainPerSec: 2.4, names: { ja: '完熟トマト', en: 'Tomato', es: 'Tomate' } },
+      eggplant: { id: 'eggplant', reqLevel: 3, icon: '🍆', cropEmoji: '🍆', seedCost: 50, sellPrice: 110, exp: 45, growTimeSec: 32, freshTimeSec: 42, waterDrainPerSec: 2.6, names: { ja: 'なす', en: 'Eggplant', es: 'Berenjena' } },
+      sweetpotato: { id: 'sweetpotato', reqLevel: 3, icon: '🍠', cropEmoji: '🍠', seedCost: 55, sellPrice: 125, exp: 50, growTimeSec: 36, freshTimeSec: 65, waterDrainPerSec: 1.6, names: { ja: 'さつまいも', en: 'Sweet Potato', es: 'Batata' } },
+      // Lv.4
+      cherry: { id: 'cherry', reqLevel: 4, icon: '🍒', cropEmoji: '🍒', seedCost: 65, sellPrice: 145, exp: 55, growTimeSec: 38, freshTimeSec: 36, waterDrainPerSec: 2.7, names: { ja: 'ふたごさくらんぼ', en: 'Sweet Cherry', es: 'Cereza' } },
+      corn: { id: 'corn', reqLevel: 4, icon: '🌽', cropEmoji: '🌽', seedCost: 70, sellPrice: 155, exp: 60, growTimeSec: 40, freshTimeSec: 45, waterDrainPerSec: 2.8, names: { ja: 'とうもろこし', en: 'Sweet Corn', es: 'Maíz' } },
+      broccoli: { id: 'broccoli', reqLevel: 4, icon: '🥦', cropEmoji: '🥦', seedCost: 80, sellPrice: 175, exp: 68, growTimeSec: 42, freshTimeSec: 40, waterDrainPerSec: 2.7, names: { ja: 'ブロッコリー', en: 'Broccoli', es: 'Brócoli' } },
+      // Lv.5
+      pumpkin: { id: 'pumpkin', reqLevel: 5, icon: '🎃', cropEmoji: '🎃', seedCost: 100, sellPrice: 225, exp: 85, growTimeSec: 48, freshTimeSec: 60, waterDrainPerSec: 2.5, names: { ja: 'かぼちゃ', en: 'Pumpkin', es: 'Calabaza' } },
+      chili: { id: 'chili', reqLevel: 5, icon: '🌶️', cropEmoji: '🌶️', seedCost: 110, sellPrice: 260, exp: 95, growTimeSec: 35, freshTimeSec: 22, waterDrainPerSec: 3.4, names: { ja: '激辛ハバネロ', en: 'Habanero', es: 'Habanero' } },
+      // Lv.6
+      strawberry: { id: 'strawberry', reqLevel: 6, icon: '🍓', cropEmoji: '🍓', seedCost: 140, sellPrice: 320, exp: 115, growTimeSec: 50, freshTimeSec: 32, waterDrainPerSec: 3.2, names: { ja: 'あまおう苺', en: 'Strawberry', es: 'Fresa' } },
+      peach: { id: 'peach', reqLevel: 6, icon: '🍑', cropEmoji: '🍑', seedCost: 150, sellPrice: 345, exp: 122, growTimeSec: 52, freshTimeSec: 34, waterDrainPerSec: 3.1, names: { ja: 'ぷりぷり白桃', en: 'White Peach', es: 'Melocotón' } },
+      blueberry: { id: 'blueberry', reqLevel: 6, icon: '🫐', cropEmoji: '🫐', seedCost: 160, sellPrice: 365, exp: 130, growTimeSec: 54, freshTimeSec: 35, waterDrainPerSec: 3.1, names: { ja: 'ブルーベリー', en: 'Blueberry', es: 'Arándano' } },
+      // Lv.7
+      lemon: { id: 'lemon', reqLevel: 7, icon: '🍋', cropEmoji: '🍋', seedCost: 185, sellPrice: 425, exp: 145, growTimeSec: 58, freshTimeSec: 42, waterDrainPerSec: 3.0, names: { ja: 'はちみつレモン', en: 'Honey Lemon', es: 'Limón' } },
+      avocado: { id: 'avocado', reqLevel: 7, icon: '🥑', cropEmoji: '🥑', seedCost: 200, sellPrice: 460, exp: 160, growTimeSec: 60, freshTimeSec: 38, waterDrainPerSec: 3.3, names: { ja: '森のバターアボカド', en: 'Avocado', es: 'Aguacate' } },
+      pineapple: { id: 'pineapple', reqLevel: 7, icon: '🍍', cropEmoji: '🍍', seedCost: 240, sellPrice: 550, exp: 190, growTimeSec: 65, freshTimeSec: 45, waterDrainPerSec: 3.0, names: { ja: 'パイナップル', en: 'Pineapple', es: 'Piña' } },
+      // Lv.8
+      mango: { id: 'mango', reqLevel: 8, icon: '🥭', cropEmoji: '🥭', seedCost: 300, sellPrice: 690, exp: 230, growTimeSec: 70, freshTimeSec: 34, waterDrainPerSec: 3.5, names: { ja: '太陽のマンゴー', en: 'Mango', es: 'Mango' } },
+      grape: { id: 'grape', reqLevel: 8, icon: '🍇', cropEmoji: '🍇', seedCost: 350, sellPrice: 810, exp: 270, growTimeSec: 75, freshTimeSec: 32, waterDrainPerSec: 3.6, names: { ja: 'シャインマスカット', en: 'Shine Muscat', es: 'Uva Moscatel' } },
+      // Lv.9
+      kiwi: { id: 'kiwi', reqLevel: 9, icon: '🥝', cropEmoji: '🥝', seedCost: 400, sellPrice: 930, exp: 305, growTimeSec: 78, freshTimeSec: 33, waterDrainPerSec: 3.7, names: { ja: 'ゴールドキウイ', en: 'Gold Kiwi', es: 'Kiwi Dorado' } },
+      melon: { id: 'melon', reqLevel: 9, icon: '🍈', cropEmoji: '🍈', seedCost: 450, sellPrice: 1050, exp: 340, growTimeSec: 80, freshTimeSec: 30, waterDrainPerSec: 3.8, names: { ja: 'クラウンメロン', en: 'Crown Melon', es: 'Melón Real' } },
+      // Lv.10 - Lv.16 超高級＆キュート作物
+      watermelon: { id: 'watermelon', reqLevel: 10, icon: '🍉', cropEmoji: '🍉', seedCost: 600, sellPrice: 1420, exp: 450, growTimeSec: 90, freshTimeSec: 35, waterDrainPerSec: 4.0, names: { ja: '伝説の黒スイカ', en: 'Black Watermelon', es: 'Sandía Negra' } },
+      coconut: { id: 'coconut', reqLevel: 11, icon: '🥥', cropEmoji: '🥥', seedCost: 700, sellPrice: 1650, exp: 510, growTimeSec: 92, freshTimeSec: 32, waterDrainPerSec: 3.8, names: { ja: '南国ココナッツ', en: 'Coconut', es: 'Coco' } },
+      dragonfruit: { id: 'dragonfruit', reqLevel: 11, icon: '🐉', cropEmoji: '🐲', seedCost: 800, sellPrice: 1900, exp: 580, growTimeSec: 95, freshTimeSec: 28, waterDrainPerSec: 3.9, names: { ja: 'ドラゴンフルーツ', en: 'Dragon Fruit', es: 'Pitahaya' } },
+      cacao: { id: 'cacao', reqLevel: 12, icon: '🫘', cropEmoji: '🍫', seedCost: 1100, sellPrice: 2650, exp: 780, growTimeSec: 105, freshTimeSec: 30, waterDrainPerSec: 4.1, names: { ja: '最高級カカオ', en: 'Royal Cacao', es: 'Cacao Real' } },
+      truffle: { id: 'truffle', reqLevel: 13, icon: '🍄', cropEmoji: '🤍', seedCost: 1500, sellPrice: 3650, exp: 1050, growTimeSec: 110, freshTimeSec: 24, waterDrainPerSec: 4.3, names: { ja: '幻の白トリュフ', en: 'White Truffle', es: 'Trufa Blanca' } },
+      goldenapple: { id: 'goldenapple', reqLevel: 14, icon: '🍎', cropEmoji: '🍏', seedCost: 2200, sellPrice: 5400, exp: 1500, growTimeSec: 120, freshTimeSec: 25, waterDrainPerSec: 4.4, names: { ja: '黄金のりんご', en: 'Golden Apple', es: 'Manzana Dorada' } },
+      starfruit: { id: 'starfruit', reqLevel: 15, icon: '⭐', cropEmoji: '🌟', seedCost: 3500, sellPrice: 8800, exp: 2500, growTimeSec: 135, freshTimeSec: 22, waterDrainPerSec: 4.6, names: { ja: '虹のスターフルーツ', en: 'Rainbow Starfruit', es: 'Carambola Arcoíris' } },
+      sakuraberry: { id: 'sakuraberry', reqLevel: 16, icon: '🌸', cropEmoji: '🍡', seedCost: 5000, sellPrice: 13000, exp: 3800, growTimeSec: 150, freshTimeSec: 20, waterDrainPerSec: 4.8, names: { ja: '夢見る桜もちベリー', en: 'Sakura Mochi Berry', es: 'Baya de Sakura' } }
+    };
+
+    // ==========================================
+    // 4. サウンドエフェクト (標準 Web Audio API - 外部CDN不要)
+    // ==========================================
+    let soundEnabled = true;
+    let audioCtx = null;
+
+    function playTone(freq, startTime, duration = 0.12, type = 'triangle', gainVal = 0.12) {
+      if (!audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, startTime);
+      gain.gain.setValueAtTime(gainVal, startTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(startTime);
+      osc.stop(startTime + duration);
+    }
+
+    function playSound(type) {
+      if (!soundEnabled) return;
+      try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+        if (!audioCtx) {
+          audioCtx = new AudioContextClass();
+        }
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+
+        const now = audioCtx.currentTime;
+        if (type === 'plant') {
+          playTone(523.25, now, 0.1);
+        } else if (type === 'water') {
+          playTone(659.25, now, 0.1);
+          playTone(783.99, now + 0.06, 0.12);
+        } else if (type === 'fert') {
+          playTone(880.00, now, 0.1);
+          playTone(1318.51, now + 0.06, 0.14);
+        } else if (type === 'wither') {
+          playTone(130.81, now, 0.2, 'sawtooth', 0.08);
+          playTone(123.47, now + 0.12, 0.25, 'sawtooth', 0.08);
+        } else if (type === 'shovel') {
+          playTone(196.00, now, 0.12, 'square', 0.06);
+        } else if (type === 'harvest') {
+          playTone(523.25, now, 0.1);
+          playTone(659.25, now + 0.07, 0.1);
+          playTone(783.99, now + 0.14, 0.1);
+          playTone(1046.50, now + 0.21, 0.22);
+        }
+      } catch (e) {}
+    }
+
+    window.toggleSound = () => {
+      soundEnabled = !soundEnabled;
+      document.getElementById('sound-toggle').textContent = soundEnabled ? '🔊' : '🔇';
+    };
+
+    // ==========================================
+    // 5. グローバル天気システム (全プレイヤー共通時間ベース)
+    // ==========================================
+    // 3分(180秒)周期で世界の天気が変化（全ユーザー同じ時間帯に同じ天気になる）
+    function getCurrentWeather() {
+      const cycleSec = Math.floor(Date.now() / 1000) % 180;
+      if (cycleSec < 100) return 'sunny';     // 100秒間: 快晴
+      if (cycleSec < 150) return 'rainy';     // 50秒間: 恵みの雨（成長2倍）
+      return 'rainbow';                       // 30秒間: 虹（売値1.5倍）
+    }
+
+    let lastWeather = null;
+    function updateWeatherUI() {
+      const weather = getCurrentWeather();
+      if (weather !== lastWeather) {
+        lastWeather = weather;
+        document.body.className = `weather-${weather} text-stone-800 antialiased flex flex-col relative`;
+        const rainLayer = document.getElementById('rain-layer');
+        rainLayer.style.opacity = weather === 'rainy' ? '0.45' : '0';
+      }
+
+      const iconEl = document.getElementById('weather-icon');
+      const labelEl = document.getElementById('weather-label');
+      const bonusEl = document.getElementById('weather-bonus-text');
+
+      if (weather === 'sunny') {
+        iconEl.textContent = '☀️';
+        labelEl.textContent = 'Sunny';
+        bonusEl.textContent = t('weatherSunny');
+        bonusEl.className = 'text-xs font-bold text-emerald-600 mt-0.5';
+      } else if (weather === 'rainy') {
+        iconEl.textContent = '🌧️';
+        labelEl.textContent = 'Rainy x2';
+        bonusEl.textContent = t('weatherRainy');
+        bonusEl.className = 'text-xs font-bold text-sky-600 mt-0.5 animate-pulse';
+      } else {
+        iconEl.textContent = '🌈';
+        labelEl.textContent = 'Rainbow x1.5';
+        bonusEl.textContent = t('weatherRainbow');
+        bonusEl.className = 'text-xs font-bold text-pink-600 mt-0.5 animate-pulse';
+      }
+    }
+
+    // ==========================================
+    // 6. アプリケーション状態 & Firestore同期
+    // ==========================================
+    let currentUser = null;
+    let unsubscribeUser = null;
+    let unsubscribeLeaderboard = null;
+    let unsubscribeVisiting = null;
+    let selectedSeedId = 'radish';
+    let selectedToolId = 'plow';
+    let selectedCoopToolId = 'helpWater';
+    let activeTab = 'ranking';
+    let leaderboardData = [];
+
+    // 訪問モード状態
+    let visitingFarmer = null;     // { uid, name, level, lang, ... } または null
+    let visitingFarmState = null;  // 訪問先の農園データ
+
+    const emptyPlot = () => ({
+      isPlowed: false,     // クワで耕されているか
+      cropId: null,
+      progressSec: 0,      // 累積成長秒数
+      water: 60,           // 水分ゲージ (0〜100%, 0または100超で枯死)
+      nutrients: 80,       // 土壌栄養度 (0〜100%)
+      hasWeeds: false,     // 雑草発生フラグ
+      hasPests: false,     // 害虫発生フラグ
+      careScore: 100,      // 育成コンディション評価 (品質ランクに影響)
+      speedFert: false,    // 成長肥料フラグ
+      qualityFert: false,  // 品質肥料フラグ
+      readySince: null,    // 100%到達時刻(ms)
+      isWithered: false,   // 枯死フラグ
+      witherReason: null   // 'dry' | 'rot' | 'overwater'
+    });
+
+    const createInitialGameState = () => ({
+      coins: 120,
+      exp: 0,
+      totalHarvested: 0,
+      plots: Array.from({ length: 9 }, () => emptyPlot()),
+      harvestCounts: {},
+      friends: [],         // フレンドのUID配列
+      helperLogs: [],      // 誰がお手伝いしてくれたかのログ
+      lastTickAt: Date.now(),
+      updatedAt: Date.now()
+    });
+
+    let gameState = createInitialGameState();
+
+    // 経験値から現在のファーマーレベルを計算 (Lv.1スタート)
+    function getFarmerLevelInfo(exp = 0) {
+      let level = 1;
+      let required = 50;
+      let remainingExp = exp;
+
+      while (remainingExp >= required) {
+        remainingExp -= required;
+        level++;
+        required = Math.floor(required * 1.45);
+      }
+
+      return {
+        level,
+        currentExp: remainingExp,
+        nextLevelExp: required,
+        percent: Math.min(100, Math.floor((remainingExp / required) * 100))
+      };
+    }
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      const colors = {
+        info: 'bg-stone-800 text-white border-stone-600',
+        success: 'bg-emerald-600 text-white border-emerald-400',
+        warning: 'bg-amber-500 text-white border-amber-300',
+        error: 'bg-rose-600 text-white border-rose-400'
+      };
+
+      toast.className = `${colors[type]} border px-4 py-2 rounded-2xl shadow-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all duration-300 transform translate-y-2 opacity-0`;
+      toast.textContent = message;
+      container.appendChild(toast);
+
+      requestAnimationFrame(() => toast.classList.remove('translate-y-2', 'opacity-0'));
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 2500);
+    }
+
+    function showFloatingEffect(plotIndex, text, colorClass = 'text-amber-300') {
+      const plotEl = document.querySelector(`[data-plot-index="${plotIndex}"]`);
+      if (!plotEl) return;
+      const floater = document.createElement('div');
+      floater.className = `floating-text absolute inset-0 flex items-center justify-center font-black text-base sm:text-lg drop-shadow-md z-20 ${colorClass}`;
+      floater.textContent = text;
+      plotEl.appendChild(floater);
+      setTimeout(() => floater.remove(), 1100);
+    }
+
+    // 畑タップ時のパーティクル爆発＆ぷるんっ！バウンス演出
+    function triggerPlotParticles(plotIndex, emojis = ['✨', '🌸']) {
+      const plotEl = document.querySelector(`[data-plot-index="${plotIndex}"]`);
+      if (!plotEl) return;
+
+      plotEl.classList.remove('animate-squish');
+      void plotEl.offsetWidth; // リフローで再トリガー
+      plotEl.classList.add('animate-squish');
+
+      const count = 7;
+      for (let i = 0; i < count; i++) {
+        const p = document.createElement('span');
+        const angle = (Math.PI * 2 * i) / count + (Math.random() * 0.4 - 0.2);
+        const dist = 36 + Math.random() * 28;
+        const tx = Math.round(Math.cos(angle) * dist) + 'px';
+        const ty = Math.round(Math.sin(angle) * dist - 12) + 'px';
+        const rot = Math.round(Math.random() * 360 - 180) + 'deg';
+
+        p.className = 'burst-particle text-sm sm:text-base';
+        p.style.setProperty('--tx', tx);
+        p.style.setProperty('--ty', ty);
+        p.style.setProperty('--rot', rot);
+        p.textContent = emojis[i % emojis.length];
+        plotEl.appendChild(p);
+        setTimeout(() => p.remove(), 860);
+      }
+    }
+
+    // レベルアップ時のお祝い紙吹雪シャワー
+    function triggerLevelUpConfetti() {
+      const icons = ['🎉', '🌸', '⭐', '🍓', '✨', '🎀', '🪙'];
+      for (let i = 0; i < 28; i++) {
+        const piece = document.createElement('div');
+        piece.className = 'confetti-piece text-xl sm:text-2xl';
+        piece.textContent = icons[i % icons.length];
+        piece.style.left = Math.random() * 100 + 'vw';
+        piece.style.animationDuration = (1.8 + Math.random() * 1.6) + 's';
+        piece.style.animationDelay = (Math.random() * 0.4) + 's';
+        document.body.appendChild(piece);
+        setTimeout(() => piece.remove(), 3800);
+      }
+    }
+
+    // 世界ランキングのリアルタイム購読（ルール2準拠：orderByを使わずメモリでソート）
+    function getUserDocRef(uid) {
+      return doc(db, 'artifacts', appId, 'users', uid, 'gameData', 'state');
+    }
+
+    function getPublicLeaderboardDocRef(uid) {
+      return doc(db, 'artifacts', appId, 'public', 'data', 'worldFarmers', uid);
+    }
+
+    async function saveGameState() {
+      gameState.updatedAt = Date.now();
+      renderAll();
+      if (!currentUser) return;
+
+      try {
+        await setDoc(getUserDocRef(currentUser.uid), gameState, { merge: true });
+        if (!currentUser.isAnonymous) {
+          const totalHarvest = Object.values(gameState.harvestCounts || {}).reduce((a, b) => a + b, 0);
+          const lvlInfo = getFarmerLevelInfo(gameState.exp || 0);
+          await setDoc(getPublicLeaderboardDocRef(currentUser.uid), {
+            uid: currentUser.uid,
+            name: currentUser.displayName || 'Farmer',
+            lang: currentLang,
+            level: lvlInfo.level,
+            coins: gameState.coins || 0,
+            totalHarvest,
+            plots: gameState.plots,
+            updatedAt: Date.now()
+          }, { merge: true });
+        }
+        document.getElementById('sync-status').textContent = t('cloudSaved');
+      } catch (e) {
+        // ネットワーク一時停止や権限制限時もローカルプレイは継続
+      }
+    }
+
+    function startListeningLeaderboard() {
+      if (unsubscribeLeaderboard) unsubscribeLeaderboard();
+      const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'worldFarmers');
+
+      unsubscribeLeaderboard = onSnapshot(colRef, (snapshot) => {
+        const list = [];
+        snapshot.forEach((docSnap) => {
+          list.push(docSnap.data());
+        });
+        // 総収穫数 ＋ コイン価値で総合スコア計算して降順ソート
+        list.sort((a, b) => {
+          const scoreA = (a.totalHarvest || 0) * 100 + (a.coins || 0);
+          const scoreB = (b.totalHarvest || 0) * 100 + (b.coins || 0);
+          return scoreB - scoreA;
+        });
+        leaderboardData = list.slice(0, 10);
+        renderLeaderboard();
+      }, () => {
+        // Firestoreルールで未許可の場合でもエラーを握りつぶし、自分のローカル順位を表示
+        if (currentUser && !currentUser.isAnonymous) {
+          const totalHarvest = Object.values(gameState.harvestCounts || {}).reduce((a, b) => a + b, 0);
+          const lvlInfo = getFarmerLevelInfo(gameState.exp || 0);
+          leaderboardData = [{
+            uid: currentUser.uid,
+            name: currentUser.displayName || 'Farmer',
+            lang: currentLang,
+            level: lvlInfo.level,
+            coins: gameState.coins || 0,
+            totalHarvest
+          }];
+        }
+        renderLeaderboard();
+      });
+    }
+
+    function startListeningUserData(uid) {
+      if (unsubscribeUser) unsubscribeUser();
+      const docRef = getUserDocRef(uid);
+      document.getElementById('sync-status').textContent = t('syncing');
+
+      unsubscribeUser = onSnapshot(docRef, async (docSnap) => {
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          gameState = { ...createInitialGameState(), ...data };
+          if (!Array.isArray(gameState.plots) || gameState.plots.length !== 9) {
+            gameState.plots = createInitialGameState().plots;
+          } else {
+            gameState.plots = gameState.plots.map(p => ({ ...emptyPlot(), ...p }));
+          }
+          if (!Array.isArray(gameState.friends)) gameState.friends = [];
+          if (!Array.isArray(gameState.helperLogs)) gameState.helperLogs = [];
+          gameState.lastTickAt = Date.now();
+        } else {
+          gameState = createInitialGameState();
+          await setDoc(docRef, gameState);
+        }
+        document.getElementById('sync-status').textContent = t('cloudSaved');
+        renderAll();
+      }, (error) => {
+        console.error("User data error:", error);
+      });
+    }
+
+    // ==========================================
+    // 7. 農園訪問・フレンド・お手伝い機能
+    // ==========================================
+    window.visitFarmer = (targetUid) => {
+      if (!targetUid) return;
+      if (currentUser && targetUid === currentUser.uid) {
+        window.returnHome();
+        return;
+      }
+
+      const targetInfo = leaderboardData.find(u => u.uid === targetUid) || { uid: targetUid, name: 'Farmer' };
+      visitingFarmer = targetInfo;
+      visitingFarmState = {
+        plots: Array.isArray(targetInfo.plots) && targetInfo.plots.length === 9
+          ? targetInfo.plots.map(p => ({ ...emptyPlot(), ...p }))
+          : Array.from({ length: 9 }, () => emptyPlot())
+      };
+
+      if (unsubscribeVisiting) unsubscribeVisiting();
+      const targetDocRef = getPublicLeaderboardDocRef(targetUid);
+      unsubscribeVisiting = onSnapshot(targetDocRef, (snap) => {
+        if (snap.exists()) {
+          const data = snap.data();
+          visitingFarmer = data;
+          visitingFarmState = {
+            plots: Array.isArray(data.plots) && data.plots.length === 9
+              ? data.plots.map(p => ({ ...emptyPlot(), ...p }))
+              : Array.from({ length: 9 }, () => emptyPlot())
+          };
+          renderAll();
+        }
+      }, () => {});
+
+      selectedCoopToolId = 'helpWater';
+      showToast(`🏡 ${targetInfo.name}${t('visitingTitleSuffix')}`, 'info');
+      renderAll();
+    };
+
+    window.returnHome = () => {
+      if (unsubscribeVisiting) {
+        unsubscribeVisiting();
+        unsubscribeVisiting = null;
+      }
+      visitingFarmer = null;
+      visitingFarmState = null;
+      renderAll();
+    };
+
+    window.toggleFriend = async (targetUid) => {
+      if (!targetUid || (currentUser && targetUid === currentUser.uid)) return;
+      if (!Array.isArray(gameState.friends)) gameState.friends = [];
+
+      const idx = gameState.friends.indexOf(targetUid);
+      if (idx >= 0) {
+        gameState.friends.splice(idx, 1);
+        showToast(t('friendRemoved'), 'info');
+      } else {
+        gameState.friends.push(targetUid);
+        playSound('fert');
+        showToast(t('friendAdded'), 'success');
+      }
+      await saveGameState();
+    };
+
+    window.toggleFriendFromVisit = () => {
+      if (visitingFarmer) {
+        window.toggleFriend(visitingFarmer.uid);
+      }
+    };
+
+    window.selectCoopTool = (toolId) => {
+      selectedCoopToolId = toolId;
+      renderTools();
+    };
+
+    async function handleVisitPlotClick(index) {
+      if (!visitingFarmer || !visitingFarmState) return;
+      const plot = visitingFarmState.plots[index];
+
+      if (!plot || !plot.cropId) {
+        showToast(t('emptyPlotVisitMsg'), 'info');
+        return;
+      }
+
+      const crop = CROPS[plot.cropId];
+      const progress = getPlotProgress(plot);
+      const myName = (currentUser && !currentUser.isAnonymous && currentUser.displayName) ? currentUser.displayName : 'Guest Helper';
+
+      // 1. 復活の秘薬（枯死状態の作物のみ）
+      if (selectedCoopToolId === 'helpRevive') {
+        if (!plot.isWithered) {
+          showToast(t('notWitheredMsg'), 'warning');
+          return;
+        }
+        if (gameState.coins < 25) {
+          showToast(`${t('notEnoughCoins')} (25🪙)`, 'warning');
+          return;
+        }
+        playSound('harvest');
+        gameState.coins -= 25;
+        gameState.exp = (gameState.exp || 0) + 50;
+
+        plot.isWithered = false;
+        plot.witherReason = null;
+        plot.water = 75;
+        plot.readySince = Date.now();
+
+        showFloatingEffect(index, '💖REVIVED! +50EXP', 'text-pink-300');
+        triggerPlotParticles(index, ['💖', '🌸', '✨']);
+        showToast(t('helpedReviveMsg'), 'success');
+        await pushCoopUpdateToNeighbor(plot, index, `💖 ${myName} revived ${crop.names.en}!`);
+        await saveGameState();
+        return;
+      }
+
+      if (plot.isWithered) {
+        showToast(t('needShovel'), 'warning');
+        return;
+      }
+
+      if (progress >= 1) {
+        showToast(t('ripePlotVisitMsg'), 'info');
+        return;
+      }
+
+      // 2. お手伝い水やり（無料・報酬コイン＋EXP）
+      if (selectedCoopToolId === 'helpWater') {
+        playSound('water');
+        plot.water = Math.min(95, (plot.water ?? 60) + 45);
+        gameState.coins += 15;
+        gameState.exp = (gameState.exp || 0) + 10;
+
+        showFloatingEffect(index, '💧+45% (+15🪙)', 'text-sky-300');
+        triggerPlotParticles(index, ['💧', '🫧', '✨']);
+        showToast(t('helpedWaterMsg'), 'success');
+        await pushCoopUpdateToNeighbor(plot, index, `💧 ${myName} watered ${crop.names.en}!`);
+        await saveGameState();
+        return;
+      }
+
+      // 3. 応援肥料（10コイン消費・EXP獲得）
+      if (selectedCoopToolId === 'helpFert') {
+        if (plot.speedFert) {
+          showToast(t('alreadyFert'), 'info');
+          return;
+        }
+        if (gameState.coins < 10) {
+          showToast(`${t('notEnoughCoins')} (10🪙)`, 'warning');
+          return;
+        }
+        playSound('fert');
+        gameState.coins -= 10;
+        gameState.exp = (gameState.exp || 0) + 25;
+        plot.speedFert = true;
+
+        showFloatingEffect(index, '✨BOOST! +25EXP', 'text-yellow-300');
+        triggerPlotParticles(index, ['✨', '⚡', '🌟']);
+        showToast(t('helpedFertMsg'), 'success');
+        await pushCoopUpdateToNeighbor(plot, index, `✨ ${myName} boosted ${crop.names.en}!`);
+        await saveGameState();
+        return;
+      }
+    }
+
+    async function pushCoopUpdateToNeighbor(updatedPlot, index, logMessage) {
+      if (!visitingFarmer || !visitingFarmState) return;
+      try {
+        const updatedPlots = [...visitingFarmState.plots];
+        updatedPlots[index] = updatedPlot;
+        const existingLogs = Array.isArray(visitingFarmer.helperLogs) ? visitingFarmer.helperLogs : [];
+        const newLogs = [{ text: logMessage, at: Date.now() }, ...existingLogs].slice(0, 15);
+
+        await updateDoc(getPublicLeaderboardDocRef(visitingFarmer.uid), {
+          plots: updatedPlots,
+          helperLogs: newLogs
+        });
+      } catch (e) {
+        // 相手のドキュメント更新がルール上制限されている場合でもローカル報酬は維持
+      }
+    }
+
+    // ==========================================
+    // 8. ゲームプレイ・ロジック（本格シミュレーション）
+    // ==========================================
+    function getPlotProgress(plot) {
+      if (!plot.cropId) return 0;
+      const crop = CROPS[plot.cropId];
+      if (!crop) return 0;
+      return Math.min(1, Math.max(0, (plot.progressSec || 0) / crop.growTimeSec));
+    }
+
+    // 育成コンディションから品質ランク（B / A / S / SS）と倍率を算出
+    function getCropGradeInfo(plot) {
+      if (!plot) return { grade: 'A', mult: 1.0, badgeColor: 'bg-emerald-500 text-white' };
+      const score = (plot.careScore ?? 100) + (plot.qualityFert ? 25 : 0) + ((plot.nutrients ?? 80) >= 70 ? 10 : 0);
+      if (score >= 120) return { grade: '👑SS', mult: 1.8, badgeColor: 'bg-gradient-to-r from-amber-400 to-pink-500 text-white' };
+      if (score >= 95) return { grade: '⭐S', mult: 1.35, badgeColor: 'bg-amber-400 text-amber-950' };
+      if (score >= 70) return { grade: 'A', mult: 1.0, badgeColor: 'bg-emerald-500 text-white' };
+      return { grade: 'B', mult: 0.75, badgeColor: 'bg-stone-400 text-white' };
+    }
+
+    function getSellPriceWithBonuses(crop, plot) {
+      let price = crop.sellPrice;
+      if (plot) {
+        const gradeInfo = getCropGradeInfo(plot);
+        price *= gradeInfo.mult;
+      }
+      if (getCurrentWeather() === 'rainbow') price *= 1.5;
+      return Math.round(price);
+    }
+
+    // 毎秒のリアルタイムシミュレーション（成長・水分減少・雑草・害虫・枯死判定）
+    function simulateTick() {
+      const now = Date.now();
+      const dtSec = Math.min(5, Math.max(0.1, (now - (gameState.lastTickAt || now)) / 1000));
+      gameState.lastTickAt = now;
+
+      const weather = getCurrentWeather();
+      let stateChanged = false;
+      let someoneWithered = false;
+
+      gameState.plots.forEach((plot, idx) => {
+        if (!plot.cropId || plot.isWithered) return;
+        const crop = CROPS[plot.cropId];
+        if (!crop) return;
+
+        const progress = getPlotProgress(plot);
+
+        // 1. まだ成長途中の場合
+        if (progress < 1) {
+          // ランダムで雑草・害虫が発生（リアル農業の手間）
+          if (!plot.hasWeeds && Math.random() < 0.025 * dtSec) {
+            plot.hasWeeds = true;
+            stateChanged = true;
+          }
+          if (!plot.hasPests && weather !== 'rainy' && Math.random() < 0.018 * dtSec) {
+            plot.hasPests = true;
+            stateChanged = true;
+          }
+
+          // 雑草・害虫放置による栄養低下＆品質スコア減少
+          if (plot.hasWeeds) {
+            plot.nutrients = Math.max(0, (plot.nutrients ?? 80) - 2.5 * dtSec);
+            plot.careScore = Math.max(30, (plot.careScore ?? 100) - 1.5 * dtSec);
+          }
+          if (plot.hasPests) {
+            plot.careScore = Math.max(30, (plot.careScore ?? 100) - 2.5 * dtSec);
+          }
+
+          // 天気による水分変化（雨なら自動回復、快晴なら乾燥加速）
+          if (weather === 'rainy') {
+            plot.water = Math.min(95, (plot.water ?? 60) + 4 * dtSec);
+          } else {
+            const sunnyFactor = weather === 'sunny' ? 1.25 : 1.0;
+            plot.water = Math.max(0, (plot.water ?? 60) - crop.waterDrainPerSec * sunnyFactor * dtSec);
+          }
+
+          // 水分0%で枯死！
+          if (plot.water <= 0) {
+            plot.water = 0;
+            plot.isWithered = true;
+            plot.witherReason = 'dry';
+            someoneWithered = true;
+            stateChanged = true;
+            showFloatingEffect(idx, '🥀DRY!', 'text-rose-400');
+            return;
+          }
+
+          // 水分・栄養・害虫による成長効率計算
+          let waterEfficiency = 1.0;
+          if (plot.water < 20) waterEfficiency = 0.4;
+          else if (plot.water > 85) waterEfficiency = 0.7;
+
+          const nutrientEfficiency = (plot.nutrients ?? 80) >= 40 ? 1.0 : 0.65;
+          const pestPenalty = plot.hasPests ? 0.35 : 1.0;
+          const weedPenalty = plot.hasWeeds ? 0.75 : 1.0;
+          const weatherSpeed = weather === 'rainy' ? 2.0 : 1.0;
+          const fertSpeed = plot.speedFert ? 1.6 : 1.0;
+
+          plot.progressSec = (plot.progressSec || 0) + dtSec * waterEfficiency * nutrientEfficiency * pestPenalty * weedPenalty * weatherSpeed * fertSpeed;
+          stateChanged = true;
+
+          // 100%到達チェック
+          if (plot.progressSec >= crop.growTimeSec) {
+            plot.progressSec = crop.growTimeSec;
+            plot.readySince = now;
+          }
+        } else {
+          // 2. 収穫可能状態（100%）の鮮度カウントダウン
+          if (!plot.readySince) plot.readySince = now;
+          const elapsedReadySec = (now - plot.readySince) / 1000;
+          if (elapsedReadySec >= crop.freshTimeSec) {
+            plot.isWithered = true;
+            plot.witherReason = 'rot';
+            someoneWithered = true;
+            stateChanged = true;
+            showFloatingEffect(idx, '🥀ROT!', 'text-rose-400');
+          }
+        }
+      });
+
+      if (someoneWithered) {
+        playSound('wither');
+        showToast(t('witheredDry'), 'error');
+        saveGameState();
+      } else if (stateChanged) {
+        renderFarm();
+      }
+    }
+
+    async function handlePlotClick(index) {
+      // 訪問モード中はお手伝いクリック処理へ分岐
+      if (visitingFarmer) {
+        await handleVisitPlotClick(index);
+        return;
+      }
+
+      const plot = gameState.plots[index];
+
+      // 【ツール：スコップ】いつでも撤去可能
+      if (selectedToolId === 'shovel') {
+        if (!plot.cropId) return;
+        playSound('shovel');
+        gameState.plots[index] = emptyPlot();
+        showFloatingEffect(index, '⛏️', 'text-stone-300');
+        showToast(t('cleanedPlot'), 'info');
+        await saveGameState();
+        return;
+      }
+
+      // 枯れている場合はスコップを促す
+      if (plot.cropId && plot.isWithered) {
+        playSound('wither');
+        showToast(t('needShovel'), 'warning');
+        return;
+      }
+
+      // 【空き地の場合】：まずクワで耕す → その後タネまき
+      if (!plot.cropId) {
+        if (!plot.isPlowed) {
+          if (selectedToolId !== 'plow') {
+            window.selectTool('plow');
+            showToast(t('needPlowMsg'), 'warning');
+            return;
+          }
+          playSound('shovel');
+          plot.isPlowed = true;
+          plot.nutrients = 85;
+          showFloatingEffect(index, '🚜TILLED!', 'text-amber-200');
+          triggerPlotParticles(index, ['🟫', '✨', '🌱']);
+          showToast(t('plowedMsg'), 'success');
+          await saveGameState();
+          return;
+        }
+
+        // 耕し済みならタネまき
+        if (selectedToolId !== 'hand') {
+          window.selectTool('hand');
+        }
+        const crop = CROPS[selectedSeedId];
+        const lvlInfo = getFarmerLevelInfo(gameState.exp || 0);
+        if (lvlInfo.level < crop.reqLevel) {
+          showToast(`🔒 Lv.${crop.reqLevel} ${t('levelLocked')}`, 'warning');
+          return;
+        }
+        if (gameState.coins < crop.seedCost) {
+          showToast(`${t('notEnoughCoins')} (${crop.seedCost}🪙)`, 'warning');
+          return;
+        }
+
+        playSound('plant');
+        gameState.coins -= crop.seedCost;
+        gameState.plots[index] = {
+          ...emptyPlot(),
+          isPlowed: true,
+          cropId: crop.id,
+          water: 60,
+          nutrients: plot.nutrients ?? 85,
+          careScore: 100
+        };
+
+        showFloatingEffect(index, `-${crop.seedCost}🪙`, 'text-rose-300');
+        triggerPlotParticles(index, ['🌱', '🌸', '✨']);
+        await saveGameState();
+        return;
+      }
+
+      // 以降、作物が植わっている状態
+      const crop = CROPS[plot.cropId];
+      const progress = getPlotProgress(plot);
+
+      // 【完成している場合】：どのツールでも（スコップ以外）タップで即収穫！
+      if (progress >= 1) {
+        playSound('harvest');
+        const prevLevel = getFarmerLevelInfo(gameState.exp || 0).level;
+        const gradeInfo = getCropGradeInfo(plot);
+        const earned = getSellPriceWithBonuses(crop, plot);
+        const gainedExp = crop.exp || 10;
+
+        gameState.coins += earned;
+        gameState.exp = (gameState.exp || 0) + gainedExp;
+        gameState.harvestCounts[crop.id] = (gameState.harvestCounts[crop.id] || 0) + 1;
+        // 収穫後は土が硬くなるので再耕作が必要に
+        gameState.plots[index] = emptyPlot();
+
+        const newLevel = getFarmerLevelInfo(gameState.exp).level;
+        showFloatingEffect(index, `${gradeInfo.grade} +${earned}🪙`, 'text-amber-300');
+        triggerPlotParticles(index, [crop.cropEmoji, '🪙', '⭐', '🎉']);
+        showToast(`[${gradeInfo.grade}] ${crop.names[currentLang]}${t('harvestedMsg')} +${earned}🪙 (+${gainedExp}EXP)`, 'success');
+
+        if (newLevel > prevLevel) {
+          triggerLevelUpConfetti();
+          setTimeout(() => showToast(`Lv.${newLevel} ${t('levelUpMsg')}`, 'success'), 500);
+        }
+
+        await saveGameState();
+        return;
+      }
+
+      // 【害虫駆除ツール】
+      if (selectedToolId === 'pest') {
+        if (!plot.hasPests) {
+          showToast('✨ 🐛はいません！', 'info');
+          return;
+        }
+        if (gameState.coins < 10) {
+          showToast(`${t('notEnoughCoins')} (10🪙)`, 'warning');
+          return;
+        }
+        playSound('fert');
+        gameState.coins -= 10;
+        plot.hasPests = false;
+        plot.careScore = Math.min(125, (plot.careScore ?? 100) + 10);
+        showFloatingEffect(index, '🧴CURED!', 'text-emerald-300');
+        triggerPlotParticles(index, ['🫧', '✨', '💚']);
+        showToast(t('pestCuredMsg'), 'success');
+        await saveGameState();
+        return;
+      }
+
+      // 【育成中の場合】：雑草が生えていれば手ツールで抜ける
+      if (plot.hasWeeds && (selectedToolId === 'hand' || selectedToolId === 'plow')) {
+        playSound('plant');
+        plot.hasWeeds = false;
+        plot.careScore = Math.min(125, (plot.careScore ?? 100) + 8);
+        showFloatingEffect(index, '🌿WEEDED!', 'text-lime-300');
+        triggerPlotParticles(index, ['🌿', '✨']);
+        showToast(t('weedRemovedMsg'), 'success');
+        await saveGameState();
+        return;
+      }
+
+      if (selectedToolId === 'water' || selectedToolId === 'hand') {
+        playSound('water');
+        plot.water = (plot.water ?? 60) + 45;
+
+        // 100%を超えると根腐れで枯死！
+        if (plot.water > 100) {
+          plot.water = 100;
+          plot.isWithered = true;
+          plot.witherReason = 'overwater';
+          playSound('wither');
+          showFloatingEffect(index, '💦🥀ROOT ROT!', 'text-rose-400');
+          showToast(t('witheredOverwater'), 'error');
+        } else if (plot.water > 85) {
+          showFloatingEffect(index, '💧+45% ⚠️', 'text-amber-300');
+          showToast(t('overWatered'), 'warning');
+        } else {
+          showFloatingEffect(index, t('waterBoost'), 'text-sky-300');
+          triggerPlotParticles(index, ['💧', '🫧', '💙']);
+        }
+        await saveGameState();
+        return;
+      }
+
+      if (selectedToolId === 'speedFert') {
+        if (plot.speedFert) {
+          showToast(t('alreadyFert'), 'info');
+          return;
+        }
+        if (gameState.coins < 15) {
+          showToast(`${t('notEnoughCoins')} (15🪙)`, 'warning');
+          return;
+        }
+        playSound('fert');
+        gameState.coins -= 15;
+        plot.speedFert = true;
+        plot.nutrients = Math.min(100, (plot.nutrients ?? 80) + 25);
+        showFloatingEffect(index, '⚡SPEED & NPK!', 'text-yellow-300');
+        triggerPlotParticles(index, ['⚡', '✨', '🌟']);
+        showToast(t('fertApplied'), 'success');
+        await saveGameState();
+        return;
+      }
+
+      if (selectedToolId === 'qualityFert') {
+        if (plot.qualityFert) {
+          showToast(t('alreadyFert'), 'info');
+          return;
+        }
+        if (gameState.coins < 30) {
+          showToast(`${t('notEnoughCoins')} (30🪙)`, 'warning');
+          return;
+        }
+        playSound('fert');
+        gameState.coins -= 30;
+        plot.qualityFert = true;
+        plot.nutrients = Math.min(100, (plot.nutrients ?? 80) + 30);
+        showFloatingEffect(index, '💎SS GRADE UP!', 'text-purple-300');
+        triggerPlotParticles(index, ['💎', '💖', '✨']);
+        showToast(t('fertApplied'), 'success');
+        await saveGameState();
+        return;
+      }
+    }
+
+    // 一括収穫機能
+    window.harvestAllReady = async () => {
+      let totalEarned = 0;
+      let totalExp = 0;
+      let count = 0;
+      const prevLevel = getFarmerLevelInfo(gameState.exp || 0).level;
+
+      gameState.plots.forEach((plot, idx) => {
+        if (plot.cropId && !plot.isWithered && getPlotProgress(plot) >= 1) {
+          const crop = CROPS[plot.cropId];
+          const earned = getSellPriceWithBonuses(crop, plot);
+          const gainedExp = crop.exp || 10;
+          totalEarned += earned;
+          totalExp += gainedExp;
+          count++;
+          gameState.harvestCounts[crop.id] = (gameState.harvestCounts[crop.id] || 0) + 1;
+          gameState.plots[idx] = emptyPlot();
+          showFloatingEffect(idx, `+${earned}🪙`, 'text-amber-300');
+          triggerPlotParticles(idx, [crop.cropEmoji, '🪙', '✨']);
+        }
+      });
+
+      if (count > 0) {
+        playSound('harvest');
+        gameState.coins += totalEarned;
+        gameState.exp = (gameState.exp || 0) + totalExp;
+        const newLevel = getFarmerLevelInfo(gameState.exp).level;
+
+        showToast(`🧺 x${count} (+${totalEarned}🪙 / +${totalExp}EXP)`, 'success');
+        if (newLevel > prevLevel) {
+          triggerLevelUpConfetti();
+          setTimeout(() => showToast(`Lv.${newLevel} ${t('levelUpMsg')}`, 'success'), 500);
+        }
+        await saveGameState();
+      }
+    };
+
+    // ==========================================
+    // 9. UI切り替え & レンダリング
+    // ==========================================
+    window.setLanguage = (lang) => {
+      currentLang = lang;
+      ['ja', 'en', 'es'].forEach(l => {
+        const btn = document.getElementById(`lang-${l}`);
+        btn.className = l === lang 
+          ? 'px-2 py-1 rounded-lg bg-white shadow-sm scale-105 transition' 
+          : 'px-2 py-1 rounded-lg opacity-60 hover:opacity-100 transition';
+      });
+      updateAuthUI(currentUser);
+      updateWeatherUI();
+      renderAll();
+    };
+
+    window.switchTab = (tab) => {
+      activeTab = tab;
+      const tabs = ['ranking', 'friends', 'stats'];
+      tabs.forEach(item => {
+        const btn = document.getElementById(`tab-${item}`);
+        const view = document.getElementById(`view-${item}`);
+        if (item === tab) {
+          btn.className = 'flex-1 py-1.5 px-2 rounded-xl text-xs font-black transition bg-white text-emerald-800 shadow-sm';
+          view.classList.remove('hidden');
+        } else {
+          btn.className = 'flex-1 py-1.5 px-2 rounded-xl text-xs font-black transition text-stone-500 hover:text-stone-700';
+          view.classList.add('hidden');
+        }
+      });
+    };
+
+    window.selectSeed = (id) => {
+      const crop = CROPS[id];
+      const lvlInfo = getFarmerLevelInfo(gameState.exp || 0);
+      if (crop && lvlInfo.level < crop.reqLevel) {
+        showToast(`🔒 Lv.${crop.reqLevel} ${t('levelLocked')}`, 'warning');
+        return;
+      }
+      selectedSeedId = id;
+      selectedToolId = 'hand';
+      renderTools();
+      renderShop();
+      renderFarm();
+    };
+
+    window.selectTool = (toolId) => {
+      selectedToolId = toolId;
+      renderTools();
+    };
+
+    function renderTools() {
+      const barEl = document.getElementById('tool-bar');
+      const descEl = document.getElementById('selected-tool-desc');
+      const titleEl = document.getElementById('toolbar-title-text');
+
+      if (visitingFarmer) {
+        titleEl.textContent = t('coOpToolTitle');
+        barEl.className = 'grid grid-cols-3 gap-2';
+        const currentCoop = COOP_TOOLS.find(tool => tool.id === selectedCoopToolId) || COOP_TOOLS[0];
+        descEl.textContent = t(currentCoop.descKey);
+
+        barEl.innerHTML = COOP_TOOLS.map(tool => {
+          const isSelected = selectedCoopToolId === tool.id;
+          return `
+            <button 
+              onclick="window.selectCoopTool('${tool.id}')"
+              class="py-2 px-1.5 rounded-xl border-2 flex flex-col items-center justify-center transition ${
+                isSelected 
+                  ? 'bg-indigo-600 text-white border-indigo-800 shadow-md scale-105' 
+                  : 'bg-white hover:bg-indigo-50 text-stone-700 border-indigo-200'
+              }"
+            >
+              <span class="text-base sm:text-lg leading-none">${tool.icon}</span>
+              <span class="text-[10px] font-black mt-1 truncate max-w-full">${t(tool.labelKey)}</span>
+              ${tool.cost > 0 ? `<span class="text-[9px] font-bold opacity-90">${tool.cost}🪙</span>` : `<span class="text-[9px] font-bold text-emerald-500">+15🪙</span>`}
+            </button>
+          `;
+        }).join('');
+        return;
+      }
+
+      titleEl.textContent = t('toolTitle');
+      barEl.className = 'grid grid-cols-4 sm:grid-cols-7 gap-1.5';
+      const currentTool = TOOLS.find(tool => tool.id === selectedToolId) || TOOLS[0];
+      descEl.textContent = t(currentTool.descKey);
+
+      barEl.innerHTML = TOOLS.map(tool => {
+        const isSelected = selectedToolId === tool.id;
+        return `
+          <button 
+            onclick="window.selectTool('${tool.id}')"
+            class="py-1.5 px-1 rounded-xl border-2 flex flex-col items-center justify-center transition ${
+              isSelected 
+                ? 'bg-emerald-600 text-white border-emerald-800 shadow-md scale-105' 
+                : 'bg-white hover:bg-emerald-100/60 text-stone-700 border-emerald-200'
+            }"
+          >
+            <span class="text-base sm:text-lg leading-none">${tool.icon}</span>
+            <span class="text-[10px] font-black mt-1 truncate max-w-full">${t(tool.labelKey)}</span>
+            ${tool.cost > 0 ? `<span class="text-[9px] font-bold opacity-90">${tool.cost}🪙</span>` : `<span class="text-[9px] opacity-60">FREE</span>`}
+          </button>
+        `;
+      }).join('');
+    }
+
+    function renderLeaderboard() {
+      const el = document.getElementById('view-ranking');
+      if (!leaderboardData || leaderboardData.length === 0) {
+        el.innerHTML = `<p class="text-xs text-stone-500 text-center py-8 font-bold">${t('noRanking')}</p>`;
+        return;
+      }
+
+      const flags = { ja: '🇯🇵', en: '🇺🇸', es: '🇪🇸' };
+      const friendsSet = new Set(gameState.friends || []);
+
+      el.innerHTML = leaderboardData.map((user, idx) => {
+        const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx + 1}.`;
+        const flag = flags[user.lang] || '🌍';
+        const isMe = currentUser && user.uid === currentUser.uid;
+        const isFriend = friendsSet.has(user.uid);
+        const isVisitingThis = visitingFarmer && visitingFarmer.uid === user.uid;
+
+        return `
+          <div class="flex items-center justify-between px-2.5 py-2 rounded-xl border gap-1.5 ${
+            isVisitingThis ? 'bg-indigo-50 border-indigo-400' : isMe ? 'bg-emerald-50 border-emerald-300' : 'bg-stone-50 border-stone-100'
+          }">
+            <div class="flex items-center gap-1.5 min-w-0">
+              <span class="font-black text-xs w-5 text-center shrink-0">${medal}</span>
+              <span class="text-xs shrink-0">${flag}</span>
+              <span class="text-[10px] font-black bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded shrink-0">Lv.${user.level || 1}</span>
+              <span class="text-xs font-bold text-stone-800 truncate">${user.name || 'Farmer'}</span>
+            </div>
+            <div class="flex items-center gap-1.5 shrink-0">
+              <span class="text-[11px] font-black text-amber-600 hidden sm:inline">🪙${(user.coins || 0).toLocaleString()}</span>
+              ${!isMe ? `
+                <button onclick="window.toggleFriend('${user.uid}')" class="text-xs px-1.5 py-1 rounded-lg border transition ${isFriend ? 'bg-amber-100 border-amber-300 text-amber-700' : 'bg-white border-stone-200 text-stone-400 hover:text-amber-500'}" title="Friend">
+                  ${isFriend ? '⭐' : '☆'}
+                </button>
+                <button onclick="window.visitFarmer('${user.uid}')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-black px-2 py-1 rounded-lg shadow-sm transition">
+                  🏡 ${t('visitFarmBtn')}
+                </button>
+              ` : `<span class="text-[10px] font-black text-emerald-700 px-1.5">YOU</span>`}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderFriends() {
+      const el = document.getElementById('view-friends');
+      const friendsList = (gameState.friends || [])
+        .map(uid => leaderboardData.find(u => u.uid === uid) || { uid, name: 'Farmer', level: 1, coins: 0 })
+        .filter(Boolean);
+
+      // 自分への最新のお手伝いログも取得
+      const myPublicProfile = currentUser ? leaderboardData.find(u => u.uid === currentUser.uid) : null;
+      const logs = (myPublicProfile && Array.isArray(myPublicProfile.helperLogs)) ? myPublicProfile.helperLogs : [];
+
+      let html = '';
+
+      if (friendsList.length === 0) {
+        html += `<p class="text-xs text-stone-500 text-center py-4 font-bold bg-stone-50 rounded-xl border border-stone-100 p-3">${t('noFriendsMsg')}</p>`;
+      } else {
+        html += friendsList.map(friend => `
+          <div class="flex items-center justify-between px-3 py-2 rounded-xl border bg-amber-50/50 border-amber-200 gap-2">
+            <div class="flex items-center gap-2 min-w-0">
+              <span class="text-sm">⭐</span>
+              <span class="text-[10px] font-black bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded shrink-0">Lv.${friend.level || 1}</span>
+              <span class="text-xs font-bold text-stone-800 truncate">${friend.name || 'Friend'}</span>
+            </div>
+            <div class="flex items-center gap-1.5 shrink-0">
+              <button onclick="window.toggleFriend('${friend.uid}')" class="text-[10px] text-rose-500 hover:underline font-bold px-1">✕</button>
+              <button onclick="window.visitFarmer('${friend.uid}')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-black px-2.5 py-1 rounded-lg shadow-sm transition">
+                🏡 ${t('visitFarmBtn')}
+              </button>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      // お手伝い履歴セクション
+      html += `
+        <div class="mt-3 pt-2 border-t border-stone-200">
+          <div class="text-[11px] font-black text-emerald-900 mb-1.5">${t('recentVisitorsTitle')}</div>
+          ${logs.length === 0
+            ? `<p class="text-[11px] text-stone-400 italic">No helper activity yet.</p>`
+            : logs.slice(0, 5).map(log => `
+              <div class="text-[11px] bg-emerald-50/70 text-emerald-900 px-2.5 py-1.5 rounded-lg mb-1 font-bold border border-emerald-100">
+                ${log.text}
+              </div>
+            `).join('')
+          }
+        </div>
+      `;
+
+      el.innerHTML = html;
+    }
+
+    function applyTranslations() {
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        el.textContent = t(key);
+      });
+    }
+
+    function updateAuthUI(user) {
+      const authArea = document.getElementById('auth-area');
+      const syncStatus = document.getElementById('sync-status');
+
+      if (user && !user.isAnonymous) {
+        const avatar = user.photoURL
+          ? `<img src="${user.photoURL}" alt="avatar" class="w-7 h-7 rounded-full border border-emerald-300" onerror="this.style.display='none'">`
+          : `<span class="text-base">🧑‍🌾</span>`;
+        authArea.innerHTML = `
+          <div class="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-2xl">
+            ${avatar}
+            <span class="text-xs font-bold text-emerald-900 hidden sm:inline max-w-[90px] truncate">${user.displayName || 'Farmer'}</span>
+            <button onclick="window.handleLogout()" class="text-[11px] bg-white hover:bg-rose-50 text-rose-600 font-bold px-2 py-0.5 rounded-lg border border-rose-200 transition">
+              ${t('logoutBtn')}
+            </button>
+          </div>
+        `;
+        syncStatus.textContent = t('cloudSaved');
+      } else {
+        authArea.innerHTML = `
+          <button onclick="window.handleGoogleLogin()" class="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-bold px-3 py-1.5 rounded-2xl shadow-sm transition flex items-center gap-1.5">
+            <span>🔑</span> <span>${t('loginBtn')}</span>
+          </button>
+        `;
+        syncStatus.textContent = t('guestStatus');
+      }
+    }
+
+    window.handleGoogleLogin = async () => {
+      try {
+        await signInWithPopup(auth, googleProvider);
+        showToast(t('loginSuccess'), 'success');
+      } catch (error) {
+        console.error("Google login error:", error);
+        showToast(error.message || 'Login failed', 'error');
+      }
+    };
+
+    window.handleLogout = async () => {
+      try {
+        await signOut(auth);
+      } catch (error) {
+        console.error("Logout error:", error);
+      }
+    };
+
+    async function initAuth() {
+      onAuthStateChanged(auth, (user) => {
+        currentUser = user;
+        updateAuthUI(user);
+        if (user) {
+          startListeningUserData(user.uid);
+          startListeningLeaderboard();
+        } else {
+          if (unsubscribeUser) unsubscribeUser();
+          if (unsubscribeLeaderboard) unsubscribeLeaderboard();
+          gameState = createInitialGameState();
+          renderAll();
+        }
+      });
+
+      if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+        try {
+          await signInWithCustomToken(auth, __initial_auth_token);
+        } catch (e) {
+          await signInAnonymously(auth).catch(() => {});
+        }
+      } else if (!auth.currentUser) {
+        // ゲスト時も匿名認証を行い、request.auth != null のルールを通過できるようにする
+        await signInAnonymously(auth).catch(() => {});
+      }
+    }
+
+    function renderShop() {
+      const shopEl = document.getElementById('seed-shop');
+      const lvlInfo = getFarmerLevelInfo(gameState.exp || 0);
+
+      shopEl.innerHTML = Object.values(CROPS).map(crop => {
+        const isLocked = lvlInfo.level < crop.reqLevel;
+        const isSelected = !isLocked && selectedSeedId === crop.id && selectedToolId === 'hand';
+        const sellPrice = getSellPriceWithBonuses(crop, null);
+
+        if (isLocked) {
+          return `
+            <button 
+              onclick="window.selectSeed('${crop.id}')"
+              class="text-left p-2.5 rounded-2xl border-2 border-stone-200 bg-stone-100/80 opacity-70 flex flex-col justify-between cursor-not-allowed"
+            >
+              <div class="flex items-center justify-between w-full mb-1">
+                <span class="text-xl sm:text-2xl grayscale">🔒</span>
+                <span class="text-[10px] font-black px-2 py-0.5 rounded-full bg-stone-300 text-stone-700">
+                  Lv.${crop.reqLevel}
+                </span>
+              </div>
+              <div class="font-bold text-xs text-stone-500 truncate w-full">${crop.names[currentLang]}</div>
+              <div class="text-[10px] text-stone-400 mt-0.5">
+                Unlock at Lv.${crop.reqLevel}
+              </div>
+            </button>
+          `;
+        }
+
+        return `
+          <button 
+            onclick="window.selectSeed('${crop.id}')"
+            class="text-left p-2.5 rounded-2xl border-2 transition-all flex flex-col justify-between ${
+              isSelected 
+                ? 'bg-amber-50 border-amber-400 shadow-md scale-[1.02]' 
+                : 'bg-white hover:bg-stone-50 border-stone-200'
+            }"
+          >
+            <div class="flex items-center justify-between w-full mb-1">
+              <div class="flex items-center gap-1">
+                <span class="text-xl sm:text-2xl">${crop.icon}</span>
+                <span class="text-[9px] font-black px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">Lv.${crop.reqLevel}</span>
+              </div>
+              <span class="text-[11px] font-black px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
+                ${crop.seedCost}🪙
+              </span>
+            </div>
+            <div class="font-bold text-xs sm:text-sm text-stone-800 truncate w-full">${crop.names[currentLang]}</div>
+            <div class="text-[10px] text-stone-500 mt-0.5 flex justify-between w-full">
+              <span>⏱️${crop.growTimeSec}s ✨+${crop.exp}</span>
+              <span class="text-emerald-600 font-bold">${sellPrice}🪙</span>
+            </div>
+          </button>
+        `;
+      }).join('');
+    }
+
+    function renderStats() {
+      const statsEl = document.getElementById('view-stats');
+      statsEl.innerHTML = Object.values(CROPS).map(crop => {
+        const count = gameState.harvestCounts?.[crop.id] || 0;
+        return `
+          <div class="flex items-center justify-between bg-stone-50 px-3 py-2 rounded-xl border border-stone-100">
+            <div class="flex items-center gap-2.5">
+              <span class="text-xl">${crop.icon}</span>
+              <div class="text-xs font-bold text-stone-800">${crop.names[currentLang]}</div>
+            </div>
+            <div class="font-black text-xs text-emerald-700 bg-emerald-100/80 px-2.5 py-1 rounded-lg">
+              ${count}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderFarm() {
+      const gridEl = document.getElementById('farm-grid');
+      const titleIconEl = document.getElementById('farm-title-icon');
+      const titleTextEl = document.getElementById('farm-title-text');
+      const headerActionsEl = document.getElementById('farm-header-actions');
+      const visitingBannerEl = document.getElementById('visiting-banner');
+
+      const isVisiting = Boolean(visitingFarmer && visitingFarmState);
+      const activePlots = isVisiting ? visitingFarmState.plots : gameState.plots;
+
+      if (isVisiting) {
+        titleIconEl.textContent = '🏡';
+        titleTextEl.textContent = `${visitingFarmer.name || 'Farmer'}${t('visitingTitleSuffix')}`;
+        headerActionsEl.classList.add('hidden');
+        visitingBannerEl.classList.remove('hidden');
+        document.getElementById('visiting-farmer-name').textContent = `🏡 ${visitingFarmer.name || 'Farmer'} (Lv.${visitingFarmer.level || 1})`;
+
+        const isFriend = (gameState.friends || []).includes(visitingFarmer.uid);
+        const friendBtn = document.getElementById('visit-friend-btn');
+        friendBtn.textContent = isFriend ? '⭐ Friend ✓' : '☆ +Friend';
+        friendBtn.className = isFriend
+          ? 'bg-amber-400 text-amber-950 text-xs font-black px-2.5 py-1.5 rounded-xl shadow transition'
+          : 'bg-white/20 hover:bg-white/30 text-white text-xs font-black px-2.5 py-1.5 rounded-xl transition';
+      } else {
+        titleIconEl.textContent = '🚜';
+        titleTextEl.textContent = t('farmTitle');
+        headerActionsEl.classList.remove('hidden');
+        visitingBannerEl.classList.add('hidden');
+      }
+
+      gridEl.innerHTML = '';
+
+      activePlots.forEach((plot, index) => {
+        const cell = document.createElement('button');
+        cell.setAttribute('data-plot-index', index);
+        cell.onclick = () => handlePlotClick(index);
+
+        let soilClass = '';
+        if (!plot.cropId) {
+          soilClass = plot.isPlowed ? 'watered' : 'unplowed';
+        } else {
+          if (plot.isWithered) soilClass = 'withered';
+          else if ((plot.water ?? 60) >= 35) soilClass = 'watered';
+          else soilClass = 'dry';
+        }
+
+        cell.className = `farm-plot ${soilClass} rounded-2xl sm:rounded-3xl relative flex flex-col items-center justify-center p-2 cursor-pointer overflow-hidden`;
+
+        if (!plot.cropId) {
+          if (isVisiting) {
+            cell.innerHTML = `<span class="text-stone-300/30 text-xl font-bold">🌱</span>`;
+          } else if (!plot.isPlowed) {
+            cell.innerHTML = `
+              <span class="text-amber-200/70 text-2xl sm:text-3xl font-bold">🚜</span>
+              <span class="text-[10px] text-amber-100/90 font-bold mt-1 text-center leading-tight">
+                ${t('plowHint')}
+              </span>
+            `;
+          } else {
+            const selectedCrop = CROPS[selectedSeedId];
+            cell.innerHTML = `
+              <span class="text-emerald-200/70 text-2xl sm:text-3xl font-bold">+</span>
+              <span class="text-[10px] text-emerald-100/90 font-bold mt-1 text-center leading-tight">
+                ${selectedCrop.names[currentLang]}${t('plantHint')}
+              </span>
+            `;
+          }
+        } else if (plot.isWithered) {
+          // 枯死状態の表示
+          cell.innerHTML = `
+            <span class="absolute top-1.5 right-1.5 bg-rose-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full shadow">${t('witheredBadge')}</span>
+            <div class="text-3xl sm:text-5xl grayscale opacity-80 my-1">🥀</div>
+            <span class="text-[10px] text-rose-200 font-bold mt-1 bg-black/50 px-2 py-0.5 rounded-full">
+              ${isVisiting ? '💖 Revive!' : t('tapShovel')}
+            </span>
+          `;
+        } else {
+          const crop = CROPS[plot.cropId];
+          const progress = getPlotProgress(plot);
+          const percent = Math.floor(progress * 100);
+          const waterPct = Math.round(plot.water ?? 60);
+
+          let stageEmoji = '🌱';
+          let animClass = 'animate-crop';
+          let statusBadge = '';
+
+          if (progress >= 1) {
+            stageEmoji = crop.cropEmoji;
+            animClass = 'animate-ready';
+            const elapsedReady = (Date.now() - (plot.readySince || Date.now())) / 1000;
+            const remainFresh = Math.max(0, Math.ceil(crop.freshTimeSec - elapsedReady));
+            const urgentClass = remainFresh <= 10 ? 'bg-rose-500 text-white animate-ping' : 'bg-amber-400 text-amber-950';
+            statusBadge = `<span class="absolute top-1.5 right-1.5 ${urgentClass} text-[9px] font-black px-1.5 py-0.5 rounded-full shadow">⏰${remainFresh}s</span>`;
+          } else if (progress >= 0.5) {
+            stageEmoji = '🌿';
+          }
+
+          const fertBadges = `${plot.speedFert ? '⚡' : ''}${plot.qualityFert ? '💎' : ''}`;
+          const pestWeedBadges = `${plot.hasWeeds ? '<span class="animate-bounce inline-block">🌿</span>' : ''}${plot.hasPests ? '<span class="animate-ping inline-block">🐛</span>' : ''}`;
+          const gradeInfo = getCropGradeInfo(plot);
+
+          let waterColor = 'bg-sky-400';
+          if (waterPct <= 20) waterColor = 'bg-rose-500 animate-pulse';
+          else if (waterPct > 85) waterColor = 'bg-amber-400';
+
+          cell.innerHTML = `
+            ${statusBadge}
+            <div class="text-[10px] absolute top-1.5 left-2 font-bold drop-shadow flex items-center gap-0.5">
+              <span>${fertBadges}</span>
+              <span class="${gradeInfo.badgeColor} text-[8px] px-1 rounded font-black">${gradeInfo.grade}</span>
+            </div>
+            <div class="text-sm absolute bottom-7 right-1.5 drop-shadow z-10">${pestWeedBadges}</div>
+            <div class="text-3xl sm:text-5xl ${animClass} my-0.5">${stageEmoji}</div>
+            
+            <!-- 成長ゲージ -->
+            <div class="w-4/5 bg-black/50 h-1.5 rounded-full overflow-hidden mt-1 border border-white/20">
+              <div class="h-full transition-all duration-300 ${progress >= 1 ? 'bg-amber-400' : 'bg-emerald-400'}" style="width: ${percent}%"></div>
+            </div>
+
+            <!-- 水分ゲージ（成長中のみ表示） -->
+            ${progress < 1 ? `
+              <div class="w-4/5 bg-black/50 h-1.5 rounded-full overflow-hidden mt-1 border border-white/20 flex items-center" title="Water: ${waterPct}%">
+                <div class="h-full transition-all duration-300 ${waterColor}" style="width: ${waterPct}%"></div>
+              </div>
+              <span class="text-[9px] text-white font-bold mt-0.5 drop-shadow">
+                🌱${percent}% 💧${waterPct}% 🌿${Math.round(plot.nutrients ?? 80)}%
+              </span>
+            ` : `
+              <span class="text-[10px] text-amber-200 font-black mt-1 drop-shadow">
+                ${isVisiting ? '✨ RIPE!' : `${t('tapHarvest')} (${getSellPriceWithBonuses(crop, plot)}🪙)`}
+              </span>
+            `}
+          `;
+        }
+
+        gridEl.appendChild(cell);
+      });
+    }
+
+    function renderAll() {
+      applyTranslations();
+      document.getElementById('coin-display').textContent = gameState.coins.toLocaleString();
+
+      const lvlInfo = getFarmerLevelInfo(gameState.exp || 0);
+      document.getElementById('level-display').textContent = lvlInfo.level;
+      document.getElementById('exp-text').textContent = `${lvlInfo.currentExp}/${lvlInfo.nextLevelExp}`;
+      document.getElementById('exp-bar').style.width = `${lvlInfo.percent}%`;
+
+      renderTools();
+      renderShop();
+      renderStats();
+      renderLeaderboard();
+      renderFriends();
+      renderFarm();
+    }
+
+    // 毎秒の更新ループ（作物の成長・水分減少・枯死＆天気チェック）
+    setInterval(() => {
+      updateWeatherUI();
+      simulateTick();
+    }, 1000);
+
+    // 初期化
+    window.setLanguage(currentLang);
+    updateWeatherUI();
+    initAuth();
+  </script>
+</body>
+</html>
